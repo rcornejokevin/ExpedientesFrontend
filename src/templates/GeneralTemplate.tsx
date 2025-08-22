@@ -34,7 +34,11 @@ const GeneralTemplate = () => {
       <div className="flex grow flex-col in-data-[sticky-header=on]:pt-(--header-height-default)">
         <Header isMenuShowed={true} />
 
-        <div className="grow" role="content">
+        <div
+          className="grow"
+          role="content"
+          style={{ backgroundColor: '#FBFBFD' }}
+        >
           <Outlet />
         </div>
 
