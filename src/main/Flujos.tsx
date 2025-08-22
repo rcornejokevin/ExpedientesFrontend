@@ -1,7 +1,63 @@
-import { Network, Plus } from 'lucide-react';
+import { useState } from 'react';
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Network, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 
-export default function Flujos() {
+type Item = { id: string; title: string; helper?: string };
+const initialItems: Item[] = [
+  {
+    id: '1',
+    title: 'Documentación de Ingreso',
+    helper: 'Texto de ayuda secundario...',
+  },
+  {
+    id: '2',
+    title: 'Inconstitucionalidades',
+    helper: 'Texto de ayuda secundario...',
+  },
+  {
+    id: '3',
+    title: 'Recursos Administrativos',
+    helper: 'Texto de ayuda secundario...',
+  },
+  { id: '4', title: 'Penal', helper: 'Texto de ayuda secundario...' },
+  { id: '5', title: 'Laboral', helper: 'Texto de ayuda secundario...' },
+  { id: '6', title: 'Contencioso', helper: 'Texto de ayuda secundario...' },
+];
+export default function Flujos({
+  onReorder,
+}: {
+  onReorder?: (items: Item[]) => void;
+}) {
+  const [items, setItems] = useState<Item[]>(initialItems);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
+
+  function handleDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex((i) => i.id === String(active.id));
+    const newIndex = items.findIndex((i) => i.id === String(over.id));
+    const reordered = arrayMove(items, oldIndex, newIndex);
+    setItems(reordered);
+    onReorder?.(reordered); // persiste si quieres
+  }
   return (
     <>
       <div className="mx-5 mt-5">
@@ -15,10 +71,30 @@ export default function Flujos() {
         </div>
         <div className="flex">
           <div className="basis-1/2">
-            <div className="flex">
-              <Label className="text-lg color-dark-blue-marn font-bold">
-                EDITAR UN FLUJO EXISTENTE
-              </Label>
+            <div className="flex flex-col gap-4">
+              <div className="flex">
+                <Label className="text-lg color-dark-blue-marn font-bold">
+                  EDITAR UN FLUJO EXISTENTE
+                </Label>
+              </div>
+              <div className="flex">
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={items.map((i) => i.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-4 w-full">
+                      {items.map((item) => (
+                        <CardRow key={item.id} item={item} />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
             </div>
           </div>
           <div className="border-e border-border h-15 mx-1.5 lg:mx-5"></div>
@@ -33,5 +109,60 @@ export default function Flujos() {
         </div>
       </div>
     </>
+  );
+}
+function CardRow({ item }: { item: Item }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={[
+        'rounded-xl bg-white p-4 shadow-sm',
+        'border border-gray-200',
+        'flex items-start justify-between',
+        isDragging ? 'ring-2 ring-[#D7ED1E]/70' : '',
+      ].join(' ')}
+    >
+      {/* Izquierda: título y helper */}
+      <div className="pr-3">
+        <div className="text-[17px] font-extrabold text-[#1E2851]">
+          {item.title}
+        </div>
+        {item.helper && (
+          <div className="text-[12px] text-[#1E2851]/60">{item.helper}</div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          aria-label="Editar"
+          className="rounded-md p-1.5 hover:bg-gray-100"
+        >
+          <Pencil className="h-4 w-4 text-[#1E2851]" />
+        </button>
+        <button
+          aria-label="Eliminar"
+          className="rounded-md p-1.5 hover:bg-gray-100"
+        >
+          <Trash2 className="h-4 w-4 text-[#1E2851]" />
+        </button>
+      </div>
+    </div>
   );
 }
