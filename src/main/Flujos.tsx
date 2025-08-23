@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/auth/AuthContext';
+import { GetList as GetListFlujos } from '@/models/Flujos';
 import {
   closestCenter,
   DndContext,
@@ -14,35 +16,34 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Network, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Network, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 
 type Item = { id: string; title: string; helper?: string };
-const initialItems: Item[] = [
-  {
-    id: '1',
-    title: 'Documentación de Ingreso',
-    helper: 'Texto de ayuda secundario...',
-  },
-  {
-    id: '2',
-    title: 'Inconstitucionalidades',
-    helper: 'Texto de ayuda secundario...',
-  },
-  {
-    id: '3',
-    title: 'Recursos Administrativos',
-    helper: 'Texto de ayuda secundario...',
-  },
-  { id: '4', title: 'Penal', helper: 'Texto de ayuda secundario...' },
-  { id: '5', title: 'Laboral', helper: 'Texto de ayuda secundario...' },
-  { id: '6', title: 'Contencioso', helper: 'Texto de ayuda secundario...' },
-];
+
 export default function Flujos({
   onReorder,
 }: {
   onReorder?: (items: Item[]) => void;
 }) {
+  const { user } = useAuth();
+  const initialItems: Item[] = [];
+  useEffect(() => {
+    const fetchData = async () => {
+      const responseFlujos = await GetListFlujos(user?.jwt ?? '');
+      if (responseFlujos.code !== '000') {
+      }
+      const data = responseFlujos.data;
+      const mapped: Item[] = data.map((f: any) => ({
+        id: String(f.id),
+        title: f.nombre,
+        helper: f.detalle ?? '',
+      }));
+
+      setItems(mapped);
+    };
+    fetchData();
+  }, [0]);
   const [items, setItems] = useState<Item[]>(initialItems);
 
   const sensors = useSensors(
