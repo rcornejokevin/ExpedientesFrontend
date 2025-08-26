@@ -1,5 +1,5 @@
 import { createContext, FC, useContext, useState } from 'react';
-import { AlertCircle, Check, CheckCheck } from 'lucide-react';
+import { AlertCircle, CheckCheck } from 'lucide-react';
 import { Alert, AlertIcon, AlertTitle } from '@/components/ui/alert';
 
 interface AlertInterface {
@@ -21,6 +21,9 @@ const useFlash = () => {
 const Alerts: FC = () => {
   const { alert, setAlert } = useFlash();
   const alertObj = alert;
+  if (alertObj === null) {
+    return <></>;
+  }
   return (
     <>
       {alertObj.type === 'error' && (

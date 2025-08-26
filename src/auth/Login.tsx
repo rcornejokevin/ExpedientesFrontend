@@ -41,15 +41,18 @@ const Login = () => {
   const navigate = useNavigate();
   async function onSubmit(values: SigninSchemaType) {
     setLoading(true);
-    setAlert({ type: 'info', message: 'Iniciando sesión...' });
+    setAlert({ type: 'success', message: 'Iniciando sesión...' });
     try {
       const body = {
         username: values.usuario,
         password: values.password,
       };
-      const response = await sendPost(body, 'seguridad/login', false, '');
-      let bodyResponse = null;
-      bodyResponse = await response.json();
+      const bodyResponse: any = await sendPost(
+        body,
+        'seguridad/login',
+        false,
+        '',
+      );
       if (bodyResponse.code !== '000') {
         setAlert({ type: 'error', message: bodyResponse.message });
         setLoading(false);
@@ -60,6 +63,7 @@ const Login = () => {
         role: bodyResponse.data.role,
         jwt: bodyResponse.data.token, // Assuming the token is in bodyResponse.data.token
       };
+      setAlert(null);
       login({ user });
       navigate('/dashboard', { replace: true });
     } catch (error) {
