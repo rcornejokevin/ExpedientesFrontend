@@ -44,6 +44,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import ConfirmationDialog from '@/components/confirmationDialog';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
 
 export default function Flujos() {
@@ -59,8 +60,10 @@ export default function Flujos() {
   });
   const [items, setItems] = useState<ItemFlujo[]>(initialItems);
   const [itemToEdit, setItemToEdit] = useState<ItemFlujo>();
+  const [itemToDelete, setItemToDelete] = useState<ItemFlujo>();
   const [loading, setLoading] = useState<boolean>(false);
   const { setAlert, alert } = useFlash();
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
@@ -95,7 +98,6 @@ export default function Flujos() {
         user?.jwt ?? '',
         Number.parseInt(item.id ?? ''),
       );
-      console.log(responseFlujos);
       if (responseFlujos.code == '000') {
         setAlert({
           type: 'success',
@@ -169,6 +171,7 @@ export default function Flujos() {
           'border border-gray-200',
           'flex items-start justify-between',
           isDragging ? 'ring-2 ring-[#D7ED1E]/70' : '',
+          itemToEdit?.id == item.id ? 'ring-2 ring-[#D7ED1E]/70' : '',
         ].join(' ')}
       >
         <div className="pr-3">
@@ -194,7 +197,8 @@ export default function Flujos() {
             aria-label="Eliminar"
             className="rounded-md p-1.5 hover:bg-gray-100"
             onClick={() => {
-              deleteItem(item);
+              setItemToDelete(item);
+              setOpenDialog(true);
             }}
           >
             <Trash2 className="h-4 w-4 text-[#1E2851]" />
@@ -214,8 +218,17 @@ export default function Flujos() {
   }
   return (
     <>
-      <div className="mx-5 mt-5">
+      <div className="mx-5 my-5">
         <Alerts />
+        <ConfirmationDialog
+          show={openDialog}
+          onOpenChange={setOpenDialog}
+          action={() => {
+            if (itemToDelete !== undefined) {
+              deleteItem(itemToDelete);
+            }
+          }}
+        />
         <div className="flex items-center gap-2 mb-4 ">
           <Network color="#18CED7" className="size-20" />
           <Label className="flex items-center gap-2 font-bold text-3xl color-dark-blue-marn">

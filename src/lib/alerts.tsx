@@ -30,7 +30,9 @@ const Alerts: FC = () => {
         <Alert
           variant="destructive"
           appearance="light"
+          className="my-5"
           onClose={() => setAlert(null)}
+          close={true}
         >
           <AlertIcon>
             <AlertCircle />
@@ -41,8 +43,10 @@ const Alerts: FC = () => {
       {alertObj.type === 'success' && (
         <Alert
           variant="success"
+          className="my-5"
           appearance="light"
           onClose={() => setAlert(null)}
+          close={true}
         >
           <AlertIcon>
             <CheckCheck />
