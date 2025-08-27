@@ -317,7 +317,7 @@ export default function Flujos() {
                           </FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Ingrese el nombre del flujo"
+                              placeholder="Ingrese el texto de ayuda del flujo"
                               className="rounded-3xl"
                               rows={10}
                               {...field}

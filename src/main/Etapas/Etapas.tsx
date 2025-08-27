@@ -5,7 +5,6 @@ import {
   Edit as EditEtapa,
   GetList as GetListEtapa,
   ItemEtapa,
-  ListaOrden,
   New as NewEtapa,
   Orden as OrdenEtapa,
 } from '@/models/Etapas';
@@ -156,7 +155,7 @@ export default function Etapas() {
           nombre: values.nombre,
           ayuda: values.ayuda,
           flujo: values.flujo,
-          orden: (selectItems?.length ?? 0) + 1,
+          orden: (filteredItems?.length ?? 0) + 1,
         };
 
         response = await NewEtapa(user?.jwt ?? '', itemEtapaAdd);
@@ -430,7 +429,7 @@ export default function Etapas() {
                                 </FormLabel>
                                 <FormControl>
                                   <Textarea
-                                    placeholder="Ingrese el nombre de la etapa"
+                                    placeholder="Ingrese el texto de ayuda de la etapa"
                                     className="rounded-3xl"
                                     rows={10}
                                     {...field}

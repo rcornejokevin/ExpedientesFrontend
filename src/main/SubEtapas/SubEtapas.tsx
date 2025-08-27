@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
+import { GetList as GetListEtapas, ItemEtapa } from '@/models/Etapas';
+import { GetList as GetListFlujos, ItemFlujo, New } from '@/models/Flujos';
 import {
-  Delete as DeleteEtapa,
-  Edit as EditEtapa,
-  GetList as GetListEtapa,
-  ItemEtapa,
-  ListaOrden,
-  New as NewEtapa,
-  Orden as OrdenEtapa,
-} from '@/models/Etapas';
-import { GetList as GetListFlujos, ItemFlujo } from '@/models/Flujos';
+  Delete as DeleteSubEtapa,
+  Edit as EditSubEtapa,
+  GetList as GetListSubEtapa,
+  ItemSubEtapa,
+  New as NewSubEtapa,
+  Orden as OrdenSubEtapa,
+} from '@/models/SubEtapas';
 import {
   closestCenter,
   DndContext,
@@ -57,10 +57,10 @@ import { Textarea } from '@/components/ui/textarea';
 import ConfirmationDialog from '@/components/confirmationDialog';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
 
-export default function Etapas() {
+export default function SubEtapas() {
   //Vars
   const { user } = useAuth();
-  const initialItems: ItemEtapa[] = [];
+  const initialItems: ItemSubEtapa[] = [];
   const form = useForm<newSchemaType>({
     resolver: zodResolver(getNewSchema()),
     defaultValues: {
@@ -69,31 +69,54 @@ export default function Etapas() {
       flujo: '',
     },
   });
-  const [selectItems, setSelectItems] = useState<ItemFlujo[]>();
-  const [items, setItems] = useState<ItemEtapa[]>(initialItems);
+  const [selectItemsFlujo, setSelectItemsFlujo] = useState<ItemFlujo[]>();
+  const [selectItemsEtapa, setSelectItemsEtapa] = useState<ItemEtapa[]>();
+  const [items, setItems] = useState<ItemSubEtapa[]>(initialItems);
   const [itemToEdit, setItemToEdit] = useState<ItemEtapa>();
   const [itemToDelete, setItemToDelete] = useState<ItemEtapa>();
   const [loading, setLoading] = useState<boolean>(false);
   const { setAlert, alert } = useFlash();
   const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const selectedFlujo = form.watch('flujo');
+  const selectedEtapa = form.watch('etapa');
+  const filteredEtapa = selectItemsEtapa?.filter(
+    (i) => String(i.flujo ?? '') === String(selectedFlujo ?? ''),
+  );
+  const filteredItems = items.filter(
+    (i) => String(i.etapa ?? '') === String(selectedEtapa ?? ''),
+  );
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
   //Functions
   useEffect(() => {
-    const fetchDataEtapa = async () => {
-      const response = await GetListEtapa(user?.jwt ?? '');
+    const fetchDataSubEtapa = async () => {
+      const response = await GetListSubEtapa(user?.jwt ?? '');
       if (response.code === '000') {
         const data = response.data;
-        const mapped: ItemEtapa[] = data
+        const mapped: ItemSubEtapa[] = data
           .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
           .map((f: any) => ({
             id: String(f.id),
             nombre: f.nombre,
             ayuda: f.detalle ?? '',
-            flujo: String(f.flujoId ?? f.flujo_id ?? f.flujo ?? ''),
+            etapa: String(f.etapaId ?? ''),
           }));
         setItems(mapped);
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    };
+    const fetchDataEtapa = async () => {
+      const response = await GetListEtapas(user?.jwt ?? '');
+      if (response.code === '000') {
+        const data = response.data;
+        const mapped: any = data.map((f: any) => ({
+          id: String(f.id),
+          nombre: f.nombre,
+          flujo: f.flujoId,
+        }));
+        setSelectItemsEtapa(mapped);
       } else {
         setAlert({ type: 'error', message: response.message });
       }
@@ -106,26 +129,24 @@ export default function Etapas() {
           id: String(f.id),
           nombre: f.nombre,
         }));
-        setSelectItems(mapped);
+        setSelectItemsFlujo(mapped);
       } else {
         setAlert({ type: 'error', message: response.message });
       }
     };
     fetchDataEtapa();
     fetchDataFlujo();
+    fetchDataSubEtapa();
   }, [alert, 0]);
   // Memoized selected flujo and filtered etapas
-  const selectedFlujo = form.watch('flujo');
-  const filteredItems = items.filter(
-    (i) => String(i.flujo ?? '') === String(selectedFlujo ?? ''),
-  );
+
   const resetForm = () => {
-    form.reset({ nombre: '', ayuda: '' });
+    form.reset({ nombre: '', ayuda: '', flujo: '', etapa: '' });
     form.clearErrors();
   };
   const deleteItem = (item: ItemEtapa) => {
     const fetchData = async () => {
-      const responseFlujos = await DeleteEtapa(
+      const responseFlujos = await DeleteSubEtapa(
         user?.jwt ?? '',
         Number.parseInt(item.id ?? ''),
       );
@@ -138,12 +159,13 @@ export default function Etapas() {
     };
     fetchData();
   };
-  const loadToEdit = (item: ItemEtapa) => {
+  const loadToEdit = (item: ItemSubEtapa) => {
     setItemToEdit(item);
     form.reset({
       nombre: item.nombre,
       ayuda: item.ayuda,
-      flujo: item.flujo ?? '',
+      flujo: selectedFlujo,
+      etapa: selectedEtapa,
     });
     form.clearErrors();
   };
@@ -152,29 +174,31 @@ export default function Etapas() {
     try {
       let response: any = null;
       if (itemToEdit == null) {
-        const itemEtapaAdd: ItemEtapa = {
+        const itemEtapaAdd: ItemSubEtapa = {
           nombre: values.nombre,
           ayuda: values.ayuda,
-          flujo: values.flujo,
-          orden: (selectItems?.length ?? 0) + 1,
+          etapa: values.etapa,
+          orden: (filteredItems?.length ?? 0) + 1,
         };
-
-        response = await NewEtapa(user?.jwt ?? '', itemEtapaAdd);
+        response = await NewSubEtapa(user?.jwt ?? '', itemEtapaAdd);
       } else {
-        const itemEditted: ItemEtapa = itemToEdit;
+        const itemEditted: ItemSubEtapa = itemToEdit;
         itemEditted.nombre = values.nombre;
         itemEditted.ayuda = values.ayuda;
-        itemEditted.flujo = values.flujo;
-        response = await EditEtapa(user?.jwt ?? '', itemEditted);
+        itemEditted.etapa = values.etapa;
+        response = await EditSubEtapa(user?.jwt ?? '', itemEditted);
       }
       if (response.code == '000') {
         if (itemToEdit == null) {
-          setAlert({ type: 'success', message: 'Etapa creada correctamente.' });
+          setAlert({
+            type: 'success',
+            message: 'Sub Etapa creada correctamente.',
+          });
         }
         if (itemToEdit != null) {
           setAlert({
             type: 'success',
-            message: 'Etapa editada correctamente.',
+            message: 'Sub Etapa editada correctamente.',
           });
         }
         setItemToEdit(undefined);
@@ -250,10 +274,10 @@ export default function Etapas() {
       </div>
     );
   }
-  const onReorder = async (items: ItemEtapa[]) => {
-    const selectedFlujo = form.watch('flujo');
+  const onReorder = async (items: ItemSubEtapa[]) => {
+    const selectedEtapa = form.watch('etapa');
     const filteredItems = items.filter(
-      (i) => String(i.flujo ?? '') === String(selectedFlujo ?? ''),
+      (i) => String(i.etapa ?? '') === String(selectedEtapa ?? ''),
     );
     const itemsOrdered: any = {
       items: filteredItems.map((item, i) => {
@@ -261,7 +285,7 @@ export default function Etapas() {
       }),
     };
     try {
-      const response = await OrdenEtapa(user?.jwt ?? '', itemsOrdered);
+      const response = await OrdenSubEtapa(user?.jwt ?? '', itemsOrdered);
       if (response.code == '000') {
         setAlert({
           type: 'success',
@@ -305,12 +329,13 @@ export default function Etapas() {
             <div className="flex items-center gap-2 mb-4 ">
               <AlignRight color="#18CED7" className="size-20" />
               <Label className="flex items-center gap-2 font-bold text-3xl color-dark-blue-marn">
-                Editor de Etapa
+                Editor de Sub-Etapa
               </Label>
             </div>
+
             <div className="flex">
-              <div className="basis-1/2">
-                <div className="flex flex-col mr-50">
+              <div className="basis-2/5">
+                <div className="flex flex-col mr-5">
                   <FormField
                     control={form.control}
                     name="flujo" // asegúrate que en tu schema sea string
@@ -332,7 +357,52 @@ export default function Etapas() {
                               <SelectValue placeholder="Seleccione un Flujo" />
                             </SelectTrigger>
                             <SelectContent>
-                              {selectItems?.map((item) => (
+                              {selectItemsFlujo?.map((item) => (
+                                <SelectItem
+                                  key={item.id}
+                                  value={String(item.id)}
+                                >
+                                  {item.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              <div className="basis-1/5">
+                <div className="flex justify-center items-center p-3">
+                  <Plus size={50} />
+                </div>
+              </div>
+              <div className="basis-2/5">
+                <div className="flex flex-col mr-5">
+                  <FormField
+                    control={form.control}
+                    name="etapa" // asegúrate que en tu schema sea string
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg color-dark-blue-marn font-bold">
+                          SELECCIONE UNA ETAPA
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={(val) => {
+                              field.onChange(val);
+                              setItemToEdit(undefined);
+                            }}
+                            value={field.value}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccione una etapa" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {filteredEtapa?.map((item) => (
                                 <SelectItem
                                   key={item.id}
                                   value={String(item.id)}
@@ -351,7 +421,8 @@ export default function Etapas() {
               </div>
             </div>
             <hr className="border-e border-border my-5" />
-            {(form.watch('flujo') ?? '') !== '' ? (
+            {(form.watch('flujo') ?? '') !== '' &&
+            (form.watch('etapa') ?? '') !== '' ? (
               <>
                 <div className="flex">
                   <div className="basis-1/2">
@@ -389,12 +460,12 @@ export default function Etapas() {
                           {itemToEdit == null ? (
                             <>
                               <Plus className="size-4" />
-                              CREAR UNA NUEVA ETAPA
+                              CREAR UNA NUEVA SUB-ETAPA
                             </>
                           ) : (
                             <>
                               <Pencil className="size-4" />
-                              EDITAR LA ETAPA
+                              EDITAR LA SUB-ETAPA
                             </>
                           )}
                         </Label>
@@ -407,11 +478,11 @@ export default function Etapas() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="color-dark-blue-marn font-bold">
-                                  NOMBRE DE LA ETAPA
+                                  NOMBRE DE LA SUB ETAPA
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="Ingrese el nombre de la etapa"
+                                    placeholder="Ingrese el nombre de la sub-etapa"
                                     className="rounded-3xl"
                                     {...field}
                                   />
@@ -430,7 +501,7 @@ export default function Etapas() {
                                 </FormLabel>
                                 <FormControl>
                                   <Textarea
-                                    placeholder="Ingrese el nombre de la etapa"
+                                    placeholder="Ingrese el texto de ayuda de la subetapa"
                                     className="rounded-3xl"
                                     rows={10}
                                     {...field}
@@ -461,12 +532,12 @@ export default function Etapas() {
                                     {itemToEdit !== undefined ? (
                                       <>
                                         <Pencil />
-                                        EDITAR ETAPA
+                                        EDITAR SUB ETAPA
                                       </>
                                     ) : (
                                       <>
                                         <PlusIcon />
-                                        CREAR NUEVA ETAPA
+                                        CREAR NUEVA SUB ETAPA
                                       </>
                                     )}
                                   </div>

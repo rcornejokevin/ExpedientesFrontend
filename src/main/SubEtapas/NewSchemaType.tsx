@@ -2,7 +2,12 @@ import { z } from 'zod';
 
 export const getNewSchema = () => {
   return z.object({
-    flujo: z.string().min(1, { message: 'El flujo de la etapa es requerido' }),
+    flujo: z
+      .string()
+      .min(1, { message: 'El flujo de la subetapa es requerido' }),
+    etapa: z
+      .string()
+      .min(1, { message: 'La etapa de la subetapa es requerido' }),
     nombre: z
       .string()
       .min(1, { message: 'El nombre de la etapa es requerido' }),
