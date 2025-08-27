@@ -1,0 +1,491 @@
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/auth/AuthContext';
+import {
+  Delete as DeleteEtapa,
+  Edit as EditEtapa,
+  GetList as GetListEtapa,
+  ItemEtapa,
+  ListaOrden,
+  New as NewEtapa,
+  Orden as OrdenEtapa,
+} from '@/models/Etapas';
+import { GetList as GetListFlujos, ItemFlujo } from '@/models/Flujos';
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  AlignRight,
+  LoaderCircleIcon,
+  Pencil,
+  Plus,
+  PlusIcon,
+  Trash2,
+} from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import Alerts, { useFlash } from '@/lib/alerts';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import ConfirmationDialog from '@/components/confirmationDialog';
+import { getNewSchema, newSchemaType } from './NewSchemaType';
+
+export default function Etapas() {
+  //Vars
+  const { user } = useAuth();
+  const initialItems: ItemEtapa[] = [];
+  const form = useForm<newSchemaType>({
+    resolver: zodResolver(getNewSchema()),
+    defaultValues: {
+      nombre: '',
+      ayuda: '',
+      flujo: '',
+    },
+  });
+  const [selectItems, setSelectItems] = useState<ItemFlujo[]>();
+  const [items, setItems] = useState<ItemEtapa[]>(initialItems);
+  const [itemToEdit, setItemToEdit] = useState<ItemEtapa>();
+  const [itemToDelete, setItemToDelete] = useState<ItemEtapa>();
+  const [loading, setLoading] = useState<boolean>(false);
+  const { setAlert, alert } = useFlash();
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
+  //Functions
+  useEffect(() => {
+    const fetchDataEtapa = async () => {
+      const response = await GetListEtapa(user?.jwt ?? '');
+      if (response.code === '000') {
+        const data = response.data;
+        const mapped: ItemEtapa[] = data
+          .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+          .map((f: any) => ({
+            id: String(f.id),
+            nombre: f.nombre,
+            ayuda: f.detalle ?? '',
+            flujo: String(f.flujoId ?? f.flujo_id ?? f.flujo ?? ''),
+          }));
+        setItems(mapped);
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    };
+    const fetchDataFlujo = async () => {
+      const response = await GetListFlujos(user?.jwt ?? '');
+      if (response.code === '000') {
+        const data = response.data;
+        const mapped: any = data.map((f: any) => ({
+          id: String(f.id),
+          nombre: f.nombre,
+        }));
+        setSelectItems(mapped);
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    };
+    fetchDataEtapa();
+    fetchDataFlujo();
+  }, [alert, 0]);
+  // Memoized selected flujo and filtered etapas
+  const selectedFlujo = form.watch('flujo');
+  const filteredItems = items.filter(
+    (i) => String(i.flujo ?? '') === String(selectedFlujo ?? ''),
+  );
+  const resetForm = () => {
+    form.reset({ nombre: '', ayuda: '' });
+    form.clearErrors();
+  };
+  const deleteItem = (item: ItemEtapa) => {
+    const fetchData = async () => {
+      const responseFlujos = await DeleteEtapa(
+        user?.jwt ?? '',
+        Number.parseInt(item.id ?? ''),
+      );
+      if (responseFlujos.code == '000') {
+        setAlert({
+          type: 'success',
+          message: 'Etapa eliminado correctamente.',
+        });
+      }
+    };
+    fetchData();
+  };
+  const loadToEdit = (item: ItemEtapa) => {
+    setItemToEdit(item);
+    form.reset({
+      nombre: item.nombre,
+      ayuda: item.ayuda,
+      flujo: item.flujo ?? '',
+    });
+    form.clearErrors();
+  };
+  async function onSubmit(values: newSchemaType) {
+    setLoading(true);
+    try {
+      let response: any = null;
+      if (itemToEdit == null) {
+        const itemEtapaAdd: ItemEtapa = {
+          nombre: values.nombre,
+          ayuda: values.ayuda,
+          flujo: values.flujo,
+          orden: (selectItems?.length ?? 0) + 1,
+        };
+
+        response = await NewEtapa(user?.jwt ?? '', itemEtapaAdd);
+      } else {
+        const itemEditted: ItemEtapa = itemToEdit;
+        itemEditted.nombre = values.nombre;
+        itemEditted.ayuda = values.ayuda;
+        itemEditted.flujo = values.flujo;
+        response = await EditEtapa(user?.jwt ?? '', itemEditted);
+      }
+      if (response.code == '000') {
+        if (itemToEdit == null) {
+          setAlert({ type: 'success', message: 'Etapa creada correctamente.' });
+        }
+        if (itemToEdit != null) {
+          setAlert({
+            type: 'success',
+            message: 'Etapa editada correctamente.',
+          });
+        }
+        setItemToEdit(undefined);
+        resetForm();
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    } catch (error) {
+      setAlert({ type: 'error', message: `${error}` });
+    } finally {
+      setLoading(false);
+    }
+  }
+  function CardRow({ item }: { item: ItemEtapa }) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: item.id ?? '' });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        className={[
+          'rounded-xl bg-white p-4 shadow-sm',
+          'border border-gray-200',
+          'flex items-start justify-between',
+          isDragging ? 'ring-2 ring-[#D7ED1E]/70' : '',
+          itemToEdit?.id == item.id ? 'ring-2 ring-[#D7ED1E]/70' : '',
+        ].join(' ')}
+      >
+        <div className="pr-3">
+          <div className="text-[17px] font-extrabold text-[#1E2851]">
+            {item.nombre}
+          </div>
+          {item.ayuda && (
+            <div className="text-[12px] text-[#1E2851]/60">{item.ayuda}</div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button
+            aria-label="Editar"
+            className="rounded-md p-1.5 hover:bg-gray-100"
+            onClick={() => {
+              loadToEdit(item);
+            }}
+          >
+            <Pencil className="h-4 w-4 text-[#1E2851]" />
+          </button>
+          <button
+            aria-label="Eliminar"
+            className="rounded-md p-1.5 hover:bg-gray-100"
+            onClick={() => {
+              setItemToDelete(item);
+              setOpenDialog(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-[#1E2851]" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+  const onReorder = async (items: ItemEtapa[]) => {
+    const selectedFlujo = form.watch('flujo');
+    const filteredItems = items.filter(
+      (i) => String(i.flujo ?? '') === String(selectedFlujo ?? ''),
+    );
+    const itemsOrdered: any = {
+      items: filteredItems.map((item, i) => {
+        return { orden: i + 1, id: item.id };
+      }),
+    };
+    try {
+      const response = await OrdenEtapa(user?.jwt ?? '', itemsOrdered);
+      if (response.code == '000') {
+        setAlert({
+          type: 'success',
+          message: 'Etapa ordenada correctamente correctamente.',
+        });
+        setItemToEdit(undefined);
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    } catch (error) {
+      setAlert({ type: 'error', message: `${error}` });
+    } finally {
+      setLoading(false);
+    }
+  };
+  async function handleDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = items.findIndex((i) => i.id === String(active.id));
+    const newIndex = items.findIndex((i) => i.id === String(over.id));
+    const reordered = arrayMove(items, oldIndex, newIndex);
+    setItems(reordered);
+    onReorder?.(reordered);
+  }
+  return (
+    <>
+      <div className="mx-5 my-5">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Alerts />
+            <ConfirmationDialog
+              show={openDialog}
+              onOpenChange={setOpenDialog}
+              action={() => {
+                if (itemToDelete !== undefined) {
+                  deleteItem(itemToDelete);
+                }
+              }}
+            />
+            <div className="flex items-center gap-2 mb-4 ">
+              <AlignRight color="#18CED7" className="size-20" />
+              <Label className="flex items-center gap-2 font-bold text-3xl color-dark-blue-marn">
+                Editor de Etapa
+              </Label>
+            </div>
+            <div className="flex">
+              <div className="basis-1/2">
+                <div className="flex flex-col mr-50">
+                  <FormField
+                    control={form.control}
+                    name="flujo" // asegúrate que en tu schema sea string
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg color-dark-blue-marn font-bold">
+                          SELECCIONE UN FLUJO
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={(val) => {
+                              field.onChange(val);
+                              setItemToEdit(undefined);
+                            }}
+                            value={field.value}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccione un Flujo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {selectItems?.map((item) => (
+                                <SelectItem
+                                  key={item.id}
+                                  value={String(item.id)}
+                                >
+                                  {item.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+            <hr className="border-e border-border my-5" />
+            {(form.watch('flujo') ?? '') !== '' ? (
+              <>
+                <div className="flex">
+                  <div className="basis-1/2">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex">
+                        <Label className="text-lg color-dark-blue-marn font-bold">
+                          EDITAR UNA ETAPA EXISTENTE
+                        </Label>
+                      </div>
+                      <div className="flex">
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <SortableContext
+                            items={filteredItems.map((i) => i.id ?? '')}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            <div className="space-y-4 w-full">
+                              {filteredItems.map((item) => (
+                                <CardRow key={item.id} item={item} />
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-e border-border mx-1.5 lg:mx-5"></div>
+                  <div className="basis-1/2">
+                    <div className="flex flex-col gap-5">
+                      <div className="flex items-center">
+                        <Label className="flex text-lg color-dark-blue-marn font-bold items-center gap-1">
+                          {itemToEdit == null ? (
+                            <>
+                              <Plus className="size-4" />
+                              CREAR UNA NUEVA ETAPA
+                            </>
+                          ) : (
+                            <>
+                              <Pencil className="size-4" />
+                              EDITAR LA ETAPA
+                            </>
+                          )}
+                        </Label>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="block w-full space-y-5">
+                          <FormField
+                            control={form.control}
+                            name="nombre"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  NOMBRE DE LA ETAPA
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Ingrese el nombre de la etapa"
+                                    className="rounded-3xl"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="ayuda"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  TEXTO DE AYUDA
+                                </FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder="Ingrese el nombre de la etapa"
+                                    className="rounded-3xl"
+                                    rows={10}
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex justify-end">
+                            <button
+                              type="submit"
+                              className="btn 
+            btn-lg py-2 px-4
+            rounded-xl px-10 bg-blue-400 
+             text-white hover:bg-blue-600
+             
+             "
+                            >
+                              {loading ? (
+                                <span className="flex items-center gap-2">
+                                  <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                                  Cargando...
+                                </span>
+                              ) : (
+                                <>
+                                  <div className="flex">
+                                    {itemToEdit !== undefined ? (
+                                      <>
+                                        <Pencil />
+                                        EDITAR ETAPA
+                                      </>
+                                    ) : (
+                                      <>
+                                        <PlusIcon />
+                                        CREAR NUEVA ETAPA
+                                      </>
+                                    )}
+                                  </div>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <></>
+            )}
+          </form>
+        </Form>
+      </div>
+    </>
+  );
+}

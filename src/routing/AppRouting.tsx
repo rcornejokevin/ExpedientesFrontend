@@ -1,5 +1,5 @@
 import Dashboard from '@/main/Dashboard';
-import Etapas from '@/main/Etapas';
+import Etapas from '@/main/Etapas/Etapas';
 import Flujos from '@/main/Flujos/Flujos';
 import { GeneralTemplate } from '@/templates/GeneralTemplate';
 import { Route, Routes } from 'react-router';

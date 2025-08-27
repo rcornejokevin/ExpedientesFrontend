@@ -264,7 +264,7 @@ export default function Flujos() {
               </div>
             </div>
           </div>
-          <div className="border-e border-border h-15 mx-1.5 lg:mx-5"></div>
+          <div className="border-e border-border mx-1.5 lg:mx-5"></div>
           <div className="basis-1/2">
             <div className="flex flex-col gap-5">
               <div className="flex items-center">
