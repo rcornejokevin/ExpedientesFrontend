@@ -1,3 +1,4 @@
+import Campos from '@/main/Campos/Campos';
 import Dashboard from '@/main/Dashboard';
 import Etapas from '@/main/Etapas/Etapas';
 import Flujos from '@/main/Flujos/Flujos';
@@ -18,6 +19,7 @@ export function AppRouting() {
             <Route path="/flujos" index element={<Flujos />} />
             <Route path="/etapas" index element={<Etapas />} />
             <Route path="/subetapas" index element={<SubEtapas />} />
+            <Route path="/campos" index element={<Campos />} />
             <Route path="/*" index element={<Dashboard />} />
           </Route>
         </Route>
