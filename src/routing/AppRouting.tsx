@@ -3,6 +3,7 @@ import Dashboard from '@/main/Dashboard';
 import Etapas from '@/main/Etapas/Etapas';
 import Flujos from '@/main/Flujos/Flujos';
 import SubEtapas from '@/main/SubEtapas/SubEtapas';
+import Usuarios from '@/main/Usuario/Usuarios';
 import { GeneralTemplate } from '@/templates/GeneralTemplate';
 import { Route, Routes } from 'react-router';
 import RequireAuthoring from './RequireAuthoring';
@@ -20,6 +21,7 @@ export function AppRouting() {
             <Route path="/etapas" index element={<Etapas />} />
             <Route path="/subetapas" index element={<SubEtapas />} />
             <Route path="/campos" index element={<Campos />} />
+            <Route path="/usuarios" index element={<Usuarios />} />
             <Route path="/*" index element={<Dashboard />} />
           </Route>
         </Route>

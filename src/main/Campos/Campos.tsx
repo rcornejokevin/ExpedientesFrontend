@@ -27,7 +27,6 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { se } from 'date-fns/locale';
 import {
   AlignRight,
   LoaderCircleIcon,

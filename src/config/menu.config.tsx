@@ -5,6 +5,7 @@ import {
   Network,
   Pencil,
   TableProperties,
+  User,
 } from 'lucide-react';
 import { type MenuConfig } from './types';
 
@@ -44,6 +45,11 @@ export const MENU_SIDEBAR: MenuConfig = [
                 title: 'Editor de Campos',
                 icon: Pencil,
                 path: '/campos',
+              },
+              {
+                title: 'Usuarios',
+                icon: User,
+                path: '/usuarios',
               },
             ],
           },
@@ -90,6 +96,11 @@ export const MENU_MEGA: MenuConfig = [
                 icon: Pencil,
                 path: '/campos',
               },
+              {
+                title: 'Usuarios',
+                icon: User,
+                path: '/usuarios',
+              },
             ],
           },
         ],
@@ -128,6 +139,11 @@ export const MENU_MEGA_MOBILE: MenuConfig = [
         title: 'Editor de Campos',
         icon: Pencil,
         path: '/campos',
+      },
+      {
+        title: 'Usuarios',
+        icon: User,
+        path: '/usuarios',
       },
     ],
   },

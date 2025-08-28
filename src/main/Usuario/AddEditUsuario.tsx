@@ -1,0 +1,204 @@
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/auth/AuthContext';
+import {
+  Edit as EditUsuario,
+  New as NewUsuario,
+  Usuario,
+} from '@/models/Usuarios';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Key, LoaderCircleIcon, LucideUser } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import Alerts, { useFlash } from '@/lib/alerts';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input, InputAddon, InputGroup } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { getNewSchema, newSchemaType } from './NewSchemaType';
+
+interface AddUsuarioI {
+  open: boolean;
+  setOpen: any;
+  usuario?: Usuario;
+  edit: boolean;
+}
+export default function AddEditUsuario({
+  open,
+  setOpen,
+  usuario,
+  edit,
+}: AddUsuarioI) {
+  const [loading, setLoading] = useState<boolean>(false);
+  const { user } = useAuth();
+  const { setAlert } = useFlash();
+  const form = useForm<newSchemaType>({
+    resolver: zodResolver(getNewSchema()),
+    defaultValues: {
+      username: '',
+      perfil: '',
+    },
+  });
+  const resetForm = () => {
+    form.reset({
+      username: '',
+      perfil: '',
+    });
+    form.clearErrors();
+  };
+  async function onSubmit(values: newSchemaType) {
+    setLoading(true);
+    try {
+      let response: any = null;
+      if (edit == false) {
+        const newUser: Usuario = {
+          username: values.username,
+          perfil: values.perfil,
+        };
+        response = await NewUsuario(user?.jwt ?? '', newUser);
+      } else if (usuario != undefined) {
+        const itemEditted: Usuario = usuario;
+        itemEditted.username = values.username;
+        itemEditted.perfil = values.perfil;
+        response = await EditUsuario(user?.jwt ?? '', itemEditted);
+      }
+      if (response.code == '000') {
+        if (edit) {
+          setAlert({
+            type: 'success',
+            message: 'Usuario editado correctamente.',
+          });
+        } else {
+          setAlert({
+            type: 'success',
+            message: 'Usuario creado correctamente.',
+          });
+        }
+        resetForm();
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    } catch (error) {
+      setAlert({ type: 'error', message: `${error}` });
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    if (edit && usuario) {
+      console.log('aca');
+      form.reset({
+        username: usuario.username,
+        perfil: usuario.perfil,
+      });
+      form.clearErrors();
+    }
+  }, [usuario]);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{edit ? 'Editar Usuario' : 'Crear Usuario'}</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="block w-full">
+            <DialogBody>
+              <Alerts />
+              <div className="space-y-5">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <InputGroup>
+                          <InputAddon mode="icon">
+                            <LucideUser />
+                          </InputAddon>
+                          <Input placeholder="Ingrese el username" {...field} />
+                        </InputGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="perfil"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Perfil</FormLabel>
+                      <FormControl>
+                        <InputGroup>
+                          <InputAddon mode="icon">
+                            <Key />
+                          </InputAddon>
+                          <Select
+                            onValueChange={(val) => {
+                              field.onChange(val);
+                            }}
+                            value={field.value}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccione el Perfil" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={'Administrador'}>
+                                Administrador
+                              </SelectItem>
+                              <SelectItem value={'Usuario'}>Usuario</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </InputGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </DialogBody>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cerrar
+                </Button>
+              </DialogClose>
+              <Button type="submit">
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                    Cargando...
+                  </span>
+                ) : (
+                  'Guardar'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
