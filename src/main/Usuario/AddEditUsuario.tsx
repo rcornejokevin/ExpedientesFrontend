@@ -106,7 +106,6 @@ export default function AddEditUsuario({
   }
   useEffect(() => {
     if (edit && usuario) {
-      console.log('aca');
       form.reset({
         username: usuario.username,
         perfil: usuario.perfil,

@@ -1,10 +1,15 @@
+import { useState } from 'react';
 import { Filter, FolderOpen, Plus, Search, TableIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import NuevoExpediente from './Expediente/NuevoExpediente';
 
 const Dashboard = () => {
+  const [open, setOpen] = useState<boolean>(false);
+  const [isEdit, setIsEdit] = useState<boolean>(false);
   return (
     <>
+      <NuevoExpediente open={open} setOpen={setOpen} edit={isEdit} />
       <div className="mx-5 mt-5">
         <div className="flex gap-4">
           <div className="basis-4/5">
@@ -49,6 +54,9 @@ const Dashboard = () => {
               <button
                 className="mx-20 text-white px-4 py-2 rounded-4xl hover:opacity-60"
                 style={{ backgroundColor: '#2DA6DC' }}
+                onClick={() => {
+                  setOpen(true);
+                }}
               >
                 <Plus className="inline mr-2" />
                 Crear nuevo expediente
