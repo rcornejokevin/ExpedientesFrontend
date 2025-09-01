@@ -1,3 +1,5 @@
+import { useAuth } from '@/auth/AuthContext';
+import CamposGeneral from '@/main/Campos_General/Campos';
 import Campos from '@/main/Campos/Campos';
 import Dashboard from '@/main/Dashboard';
 import Etapas from '@/main/Etapas/Etapas';
@@ -10,6 +12,7 @@ import RequireAuthoring from './RequireAuthoring';
 import RoutingSecurity from './RoutingSecurity';
 
 export function AppRouting() {
+  const { user } = useAuth();
   return (
     <Routes>
       <Route element={<RequireAuthoring />}>
@@ -20,7 +23,11 @@ export function AppRouting() {
             <Route path="/flujos" index element={<Flujos />} />
             <Route path="/etapas" index element={<Etapas />} />
             <Route path="/subetapas" index element={<SubEtapas />} />
-            <Route path="/campos" index element={<Campos />} />
+            {user?.role == 'Super' ? (
+              <Route path="/campos" index element={<CamposGeneral />} />
+            ) : (
+              <Route path="/campos" index element={<Campos />} />
+            )}
             <Route path="/usuarios" index element={<Usuarios />} />
             <Route path="/*" index element={<Dashboard />} />
           </Route>

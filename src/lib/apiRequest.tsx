@@ -1,3 +1,9 @@
+// Global unauthorized handler that can be wired from a React context (e.g., useAuth)
+let onUnauthorized: (() => void) | null = null;
+const setUnauthorizedHandler = (fn: (() => void) | null) => {
+  onUnauthorized = fn;
+};
+
 const sendPost = async (
   body: any,
   method: string,
@@ -18,6 +24,10 @@ const sendPost = async (
       headers,
       body: JSON.stringify(body),
     });
+    if (response.status === 401) {
+      onUnauthorized?.();
+      throw new Error('Unauthorized');
+    }
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status} - ${response.statusText}`;
       let errorBody: any = null;
@@ -30,6 +40,9 @@ const sendPost = async (
         } catch {
           errorBody = { message: 'No response body' };
         }
+      }
+      if (response.status === 401) {
+        onUnauthorized?.();
       }
       if (errorBody?.message && errorBody?.data) {
         return {
@@ -68,6 +81,10 @@ const sendPut = async (
       headers,
       body: JSON.stringify(body),
     });
+    if (response.status === 401) {
+      onUnauthorized?.();
+      throw new Error('Unauthorized');
+    }
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status} - ${response.statusText}`;
       let errorBody: any = null;
@@ -80,6 +97,9 @@ const sendPut = async (
         } catch {
           errorBody = { message: 'No response body' };
         }
+      }
+      if (response.status === 401) {
+        onUnauthorized?.();
       }
       if (errorBody?.message && errorBody?.data) {
         return {
@@ -113,16 +133,50 @@ const sendGet = async (params: any, method: string, jwt: string) => {
       method: 'GET',
       headers,
     });
-    return response;
+    if (response.status === 401) {
+      onUnauthorized?.();
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status} - ${response.statusText}`;
+      let errorBody: any = null;
+      try {
+        errorBody = await response.clone().json();
+      } catch {
+        try {
+          const text = await response.clone().text();
+          errorBody = { message: text };
+        } catch {
+          errorBody = { message: 'No response body' };
+        }
+      }
+      if (response.status === 401) {
+        onUnauthorized?.();
+      }
+      if (errorBody?.message && errorBody?.data) {
+        return {
+          code: errorBody.code,
+          message: errorBody.message,
+          data: errorBody.data,
+        };
+      }
+      if (errorBody?.message) {
+        errorMessage += `: ${errorBody.message}`;
+      }
+      throw new Error(errorMessage);
+    }
+    // success
+    try {
+      return await response.json();
+    } catch {
+      return null; // GET sin body
+    }
   } catch (error) {
-    console.error('Error in API request:', error);
-    throw new Error('Failed to send request');
+    throw error;
   }
 };
 const sendDelete = async (id: number, method: string, jwt: string) => {
   const apiUrl = import.meta.env.VITE_URL;
-  const myHeaders = new Headers();
-  myHeaders.append('Authorization', `Bearer ${jwt ?? ''}`);
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -134,10 +188,46 @@ const sendDelete = async (id: number, method: string, jwt: string) => {
       method: 'DELETE',
       headers,
     });
-    return await response.json();
+    if (response.status === 401) {
+      onUnauthorized?.();
+      throw new Error('Unauthorized');
+    }
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status} - ${response.statusText}`;
+      let errorBody: any = null;
+      try {
+        errorBody = await response.clone().json();
+      } catch {
+        try {
+          const text = await response.clone().text();
+          errorBody = { message: text };
+        } catch {
+          errorBody = { message: 'No response body' };
+        }
+      }
+      if (response.status === 401) {
+        onUnauthorized?.();
+      }
+      if (errorBody?.message && errorBody?.data) {
+        return {
+          code: errorBody.code,
+          message: errorBody.message,
+          data: errorBody.data,
+        };
+      }
+      if (errorBody?.message) {
+        errorMessage += `: ${errorBody.message}`;
+      }
+      throw new Error(errorMessage);
+    }
+    try {
+      return await response.json();
+    } catch {
+      return null; // DELETE sin body
+    }
   } catch (error) {
     console.error('Error in API request:', error);
-    throw new Error('Failed to send request');
+    throw error;
   }
 };
-export { sendPost, sendGet, sendDelete, sendPut };
+export { sendPost, sendGet, sendDelete, sendPut, setUnauthorizedHandler };

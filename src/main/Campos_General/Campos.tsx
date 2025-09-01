@@ -8,7 +8,6 @@ import {
   New as NewCampo,
   Orden as OrdenCampo,
 } from '@/models/Campos';
-import { GetList as GetListEtapas, ItemEtapa } from '@/models/Etapas';
 import { GetList as GetListFlujos, ItemFlujo } from '@/models/Flujos';
 import {
   closestCenter,
@@ -57,7 +56,7 @@ import {
 import ConfirmationDialog from '@/components/confirmationDialog';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
 
-export default function Campos() {
+export default function CamposGeneral() {
   //Vars
   const { user } = useAuth();
   const initialItems: ItemCampo[] = [];
@@ -65,12 +64,11 @@ export default function Campos() {
     resolver: zodResolver(getNewSchema()),
     defaultValues: {
       nombre: '',
-      etapa: '',
       tipo: '',
+      flujo: '',
     },
   });
   const [selectItemsFlujo, setSelectItemsFlujo] = useState<ItemFlujo[]>();
-  const [selectItemsEtapa, setSelectItemsEtapa] = useState<ItemEtapa[]>();
   const [items, setItems] = useState<ItemCampo[]>(initialItems);
   const [itemToEdit, setItemToEdit] = useState<ItemCampo>();
   const [itemToDelete, setItemToDelete] = useState<ItemCampo>();
@@ -78,12 +76,9 @@ export default function Campos() {
   const { setAlert, alert } = useFlash();
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const selectedFlujo = form.watch('flujo');
-  const selectedEtapa = form.watch('etapa');
-  const filteredEtapa = selectItemsEtapa?.filter(
-    (i) => String(i.flujo ?? '') === String(selectedFlujo ?? ''),
-  );
   const filteredItems = items.filter(
-    (i) => String(i.flujo ?? '') === selectedFlujo,
+    (i) =>
+      String(i.etapa ?? '') === '' && String(i.flujo ?? '') === selectedFlujo,
   );
 
   const sensors = useSensors(
@@ -104,22 +99,7 @@ export default function Campos() {
         setAlert({ type: 'error', message: response.message });
       }
     };
-    const fetchDataEtapa = async () => {
-      const response = await GetListEtapas(user?.jwt ?? '');
-      if (response.code === '000') {
-        const data = response.data;
-        const mapped: any = data.map((f: any) => ({
-          id: String(f.id),
-          nombre: f.nombre,
-          flujo: f.flujoId,
-        }));
-        setSelectItemsEtapa(mapped);
-      } else {
-        setAlert({ type: 'error', message: response.message });
-      }
-    };
     fetchDataFlujo();
-    fetchDataEtapa();
   }, [0]);
   useEffect(() => {
     const fetchData = async () => {
@@ -148,13 +128,12 @@ export default function Campos() {
     form.reset({
       nombre: '',
       flujo: '',
-      etapa: '',
       tipo: '',
       requerido: false,
     });
     form.clearErrors();
   };
-  const deleteItem = (item: ItemEtapa) => {
+  const deleteItem = (item: ItemCampo) => {
     const fetchData = async () => {
       const responseFlujos = await DeleteCampo(
         user?.jwt ?? '',
@@ -174,7 +153,6 @@ export default function Campos() {
     form.reset({
       nombre: item.nombre,
       flujo: selectedFlujo,
-      etapa: item.etapa == null || item.etapa == '' ? 'all' : item.etapa,
       requerido: item.requerido,
       tipo: item.tipo,
     });
@@ -190,7 +168,6 @@ export default function Campos() {
           tipo: values.tipo,
           orden: (filteredItems?.length ?? 0) + 1,
           requerido: values.requerido ?? false,
-          etapa: values.etapa,
           flujo: values.flujo,
         };
         response = await NewCampo(user?.jwt ?? '', itemCampoAdd);
@@ -198,7 +175,6 @@ export default function Campos() {
         const itemEditted: ItemCampo = itemToEdit;
         itemEditted.nombre = values.nombre;
         itemEditted.tipo = values.tipo;
-        itemEditted.etapa = values.etapa;
         itemEditted.flujo = values.flujo;
         itemEditted.requerido = values.requerido ?? false;
         response = await EditCampo(user?.jwt ?? '', itemEditted);
@@ -258,12 +234,6 @@ export default function Campos() {
       >
         <div className="pr-3">
           <div className="text-[17px] font-extrabold text-[#1E2851]">
-            {item.etapa
-              ? `[${selectItemsEtapa
-                  ?.filter((i) => i.id == item.etapa)
-                  .map((i) => i.nombre)
-                  .at(0)}] `
-              : `[SIN ETAPA] `}
             {item.nombre}
           </div>
           {item.tipo && (
@@ -357,94 +327,40 @@ export default function Campos() {
             </div>
 
             <div className="flex">
-              <div className="basis-4/9">
-                <div className="flex flex-col mr-5">
-                  <FormField
-                    control={form.control}
-                    name="flujo" // asegúrate que en tu schema sea string
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg color-dark-blue-marn font-bold">
-                          SELECCIONE UN FLUJO
-                        </FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={(val) => {
-                              field.onChange(val);
-                              setItemToEdit(undefined);
-                              form.setValue('etapa', '', {
-                                shouldDirty: true,
-                              });
-                            }}
-                            value={field.value}
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione un Flujo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {selectItemsFlujo?.map((item) => (
-                                <SelectItem
-                                  key={item.id}
-                                  value={String(item.id)}
-                                >
-                                  {item.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-              <div className="basis-1/9">
-                <div className="flex justify-center items-center p-3">
-                  <Plus size={50} />
-                </div>
-              </div>
-              <div className="basis-4/9">
-                <div className="flex flex-col mr-5">
-                  <FormField
-                    control={form.control}
-                    name="etapa" // asegúrate que en tu schema sea string
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg color-dark-blue-marn font-bold">
-                          SELECCIONE UNA ETAPA
-                        </FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={(val) => {
-                              field.onChange(val);
-                              setItemToEdit(undefined);
-                            }}
-                            value={field.value}
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione una etapa" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">[SIN ETAPA]</SelectItem>
-                              {filteredEtapa?.map((item) => (
-                                <SelectItem
-                                  key={item.id}
-                                  value={String(item.id)}
-                                >
-                                  {item.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <div className="flex mr-5 w-full">
+                <FormField
+                  control={form.control}
+                  name="flujo" // asegúrate que en tu schema sea string
+                  render={({ field }) => (
+                    <FormItem className="w-[50%]">
+                      <FormLabel className="text-lg color-dark-blue-marn font-bold">
+                        SELECCIONE UN FLUJO
+                      </FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={(val) => {
+                            field.onChange(val);
+                            setItemToEdit(undefined);
+                          }}
+                          value={field.value}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccione un Flujo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {selectItemsFlujo?.map((item) => (
+                              <SelectItem key={item.id} value={String(item.id)}>
+                                {item.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
             <hr className="border-e border-border my-5" />

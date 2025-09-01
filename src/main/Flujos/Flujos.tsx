@@ -16,7 +16,6 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
@@ -88,9 +87,6 @@ export default function Flujos() {
   const resetForm = () => {
     form.reset({ nombre: '', ayuda: '' });
     form.clearErrors();
-  };
-  const onReorder = (items: ItemFlujo[]) => {
-    console.log(items);
   };
   const deleteItem = (item: ItemFlujo) => {
     const fetchData = async () => {
@@ -210,11 +206,6 @@ export default function Flujos() {
   function handleDragEnd(e: DragEndEvent) {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
-    const oldIndex = items.findIndex((i) => i.id === String(active.id));
-    const newIndex = items.findIndex((i) => i.id === String(over.id));
-    const reordered = arrayMove(items, oldIndex, newIndex);
-    //setItems(reordered);
-    //onReorder?.(reordered);
   }
   return (
     <>

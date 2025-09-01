@@ -5,7 +5,7 @@ export interface ItemCampo {
   nombre: string;
   tipo?: string;
   etapa?: string;
-  subEtapa?: string;
+  flujo?: string;
   orden?: number;
   requerido: boolean;
 }
@@ -17,9 +17,8 @@ const New = async (jwt: string, obj: ItemCampo) => {
   const newObj = {
     nombre: obj.nombre,
     orden: obj.orden,
-    etapaId: Number.parseInt(obj.etapa ?? '0'),
-    subEtapaId:
-      obj.subEtapa == 'all' ? 0 : Number.parseInt(obj.subEtapa ?? '0'),
+    etapaId: obj.etapa == 'all' ? 0 : Number.parseInt(obj.etapa ?? '0'),
+    flujoId: Number.parseInt(obj.flujo ?? '0'),
     requerido: obj.requerido,
     tipoCampo: obj.tipo,
   };
@@ -40,9 +39,8 @@ const Edit = async (jwt: string, item: ItemCampo) => {
   const newObj = {
     id: item.id,
     nombre: item.nombre,
-    etapaId: Number.parseInt(item.etapa ?? '0'),
-    subEtapaId:
-      item.subEtapa == 'all' ? 0 : Number.parseInt(item.subEtapa ?? '0'),
+    etapaId: item.etapa == 'all' ? 0 : Number.parseInt(item.etapa ?? '0'),
+    flujoId: Number.parseInt(item.flujo ?? '0'),
     requerido: item.requerido,
     tipoCampo: item.tipo,
   };

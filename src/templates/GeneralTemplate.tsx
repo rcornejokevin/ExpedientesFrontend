@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
+import { useAuth } from '@/auth/AuthContext';
 import { Helmet } from 'react-helmet-async';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { MENU_SIDEBAR } from '@/config/menu.config';
+import { setUnauthorizedHandler } from '@/lib/apiRequest';
 import { useBodyClass } from '@/hooks/use-body-class';
 import { useMenu } from '@/hooks/use-menu';
 import { useSettings } from '@/providers/settings-provider';
@@ -9,6 +11,15 @@ import { Footer } from '../components/footer';
 import { Header } from '../components/header';
 
 const GeneralTemplate = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      logout();
+      navigate('/login');
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [logout, navigate]);
   const { setOption } = useSettings();
   const { pathname } = useLocation();
   const { getCurrentItem } = useMenu(pathname);
