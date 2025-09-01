@@ -13,7 +13,7 @@ export interface ListaOrden {
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'etapa/list', jwt);
-  return await response.json();
+  return await response;
 };
 const New = async (jwt: string, obj: ItemEtapa) => {
   const newObj = {

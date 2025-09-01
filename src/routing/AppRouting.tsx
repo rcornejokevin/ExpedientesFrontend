@@ -24,9 +24,9 @@ export function AppRouting() {
             <Route path="/etapas" index element={<Etapas />} />
             <Route path="/subetapas" index element={<SubEtapas />} />
             {user?.role == 'Super' ? (
-              <Route path="/campos" index element={<CamposGeneral />} />
-            ) : (
               <Route path="/campos" index element={<Campos />} />
+            ) : (
+              <Route path="/campos" index element={<CamposGeneral />} />
             )}
             <Route path="/usuarios" index element={<Usuarios />} />
             <Route path="/*" index element={<Dashboard />} />

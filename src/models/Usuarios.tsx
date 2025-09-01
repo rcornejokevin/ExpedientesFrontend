@@ -7,7 +7,7 @@ export interface Usuario {
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'usuario/list', jwt);
-  return await response.json();
+  return await response;
 };
 const New = async (jwt: string, obj: Usuario) => {
   const newObj = {

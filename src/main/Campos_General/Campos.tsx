@@ -53,6 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import Cards from '@/components/Cards';
 import ConfirmationDialog from '@/components/confirmationDialog';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
 
@@ -203,70 +204,10 @@ export default function CamposGeneral() {
       setLoading(false);
     }
   }
-  function CardRow({ item }: { item: ItemCampo }) {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id: item.id ?? '' });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-    };
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        className={[
-          'rounded-xl bg-white p-4 shadow-sm',
-          'border border-gray-200',
-          'flex items-start justify-between',
-          isDragging ? 'ring-2 ring-[#D7ED1E]/70' : '',
-          itemToEdit?.id == item.id ? 'ring-2 ring-[#D7ED1E]/70' : '',
-        ].join(' ')}
-      >
-        <div className="pr-3">
-          <div className="text-[17px] font-extrabold text-[#1E2851]">
-            {item.nombre}
-          </div>
-          {item.tipo && (
-            <div className="text-[12px] text-[#1E2851]/60">
-              {item.tipo} <b>{item.requerido ? '- REQUERIDO' : ''}</b>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button
-            aria-label="Editar"
-            className="rounded-md p-1.5 hover:bg-gray-100"
-            onClick={() => {
-              loadToEdit(item);
-            }}
-          >
-            <Pencil className="h-4 w-4 text-[#1E2851]" />
-          </button>
-          <button
-            aria-label="Eliminar"
-            className="rounded-md p-1.5 hover:bg-gray-100"
-            onClick={() => {
-              setItemToDelete(item);
-              setOpenDialog(true);
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-[#1E2851]" />
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const loadToDelete = (item: any) => {
+    setItemToDelete(item);
+    setOpenDialog(true);
+  };
   const onReorder = async (items: ItemCampo[]) => {
     const selectedFlujo = form.watch('flujo');
     const filteredItems = items.filter(
@@ -375,22 +316,13 @@ export default function CamposGeneral() {
                         </Label>
                       </div>
                       <div className="flex">
-                        <DndContext
-                          sensors={sensors}
-                          collisionDetection={closestCenter}
-                          onDragEnd={handleDragEnd}
-                        >
-                          <SortableContext
-                            items={filteredItems.map((i) => i.id ?? '')}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            <div className="space-y-4 w-full">
-                              {filteredItems.map((item) => (
-                                <CardRow key={item.id} item={item} />
-                              ))}
-                            </div>
-                          </SortableContext>
-                        </DndContext>
+                        <Cards
+                          items={filteredItems}
+                          onReorder={onReorder}
+                          loadToEdit={loadToEdit}
+                          isOrdered={true}
+                          loadToDelete={loadToDelete}
+                        />
                       </div>
                     </div>
                   </div>

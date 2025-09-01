@@ -11,7 +11,7 @@ export interface ItemCampo {
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'campo/list', jwt);
-  return await response.json();
+  return await response;
 };
 const New = async (jwt: string, obj: ItemCampo) => {
   const newObj = {

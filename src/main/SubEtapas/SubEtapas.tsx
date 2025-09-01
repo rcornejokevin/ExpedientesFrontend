@@ -10,21 +10,6 @@ import {
   New as NewSubEtapa,
   Orden as OrdenSubEtapa,
 } from '@/models/SubEtapas';
-import {
-  closestCenter,
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlignRight,
@@ -32,7 +17,6 @@ import {
   Pencil,
   Plus,
   PlusIcon,
-  Trash2,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Alerts, { useFlash } from '@/lib/alerts';
@@ -54,6 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import Cards from '@/components/Cards';
 import ConfirmationDialog from '@/components/confirmationDialog';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
 
@@ -84,9 +69,6 @@ export default function SubEtapas() {
   );
   const filteredItems = items.filter(
     (i) => String(i.etapa ?? '') === String(selectedEtapa ?? ''),
-  );
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
   //Functions
   useEffect(() => {
@@ -212,68 +194,10 @@ export default function SubEtapas() {
       setLoading(false);
     }
   }
-  function CardRow({ item }: { item: ItemEtapa }) {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id: item.id ?? '' });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-    };
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        className={[
-          'rounded-xl bg-white p-4 shadow-sm',
-          'border border-gray-200',
-          'flex items-start justify-between',
-          isDragging ? 'ring-2 ring-[#D7ED1E]/70' : '',
-          itemToEdit?.id == item.id ? 'ring-2 ring-[#D7ED1E]/70' : '',
-        ].join(' ')}
-      >
-        <div className="pr-3">
-          <div className="text-[17px] font-extrabold text-[#1E2851]">
-            {item.nombre}
-          </div>
-          {item.ayuda && (
-            <div className="text-[12px] text-[#1E2851]/60">{item.ayuda}</div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button
-            aria-label="Editar"
-            className="rounded-md p-1.5 hover:bg-gray-100"
-            onClick={() => {
-              loadToEdit(item);
-            }}
-          >
-            <Pencil className="h-4 w-4 text-[#1E2851]" />
-          </button>
-          <button
-            aria-label="Eliminar"
-            className="rounded-md p-1.5 hover:bg-gray-100"
-            onClick={() => {
-              setItemToDelete(item);
-              setOpenDialog(true);
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-[#1E2851]" />
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const loadToDelete = (item: ItemFlujo) => {
+    setItemToDelete(item);
+    setOpenDialog(true);
+  };
   const onReorder = async (items: ItemSubEtapa[]) => {
     const selectedEtapa = form.watch('etapa');
     const filteredItems = items.filter(
@@ -301,16 +225,6 @@ export default function SubEtapas() {
       setLoading(false);
     }
   };
-  async function handleDragEnd(e: DragEndEvent) {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = items.findIndex((i) => i.id === String(active.id));
-    const newIndex = items.findIndex((i) => i.id === String(over.id));
-    const reordered = arrayMove(items, oldIndex, newIndex);
-    setItems(reordered);
-    onReorder?.(reordered);
-  }
   return (
     <>
       <div className="mx-5 my-5">
@@ -433,22 +347,13 @@ export default function SubEtapas() {
                         </Label>
                       </div>
                       <div className="flex">
-                        <DndContext
-                          sensors={sensors}
-                          collisionDetection={closestCenter}
-                          onDragEnd={handleDragEnd}
-                        >
-                          <SortableContext
-                            items={filteredItems.map((i) => i.id ?? '')}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            <div className="space-y-4 w-full">
-                              {filteredItems.map((item) => (
-                                <CardRow key={item.id} item={item} />
-                              ))}
-                            </div>
-                          </SortableContext>
-                        </DndContext>
+                        <Cards
+                          isOrdered={true}
+                          items={filteredItems}
+                          loadToEdit={loadToEdit}
+                          loadToDelete={loadToDelete}
+                          onReorder={onReorder}
+                        />
                       </div>
                     </div>
                   </div>

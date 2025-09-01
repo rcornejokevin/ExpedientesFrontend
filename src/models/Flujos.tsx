@@ -7,7 +7,7 @@ export interface ItemFlujo {
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'flujo/list', jwt);
-  return await response.json();
+  return await response;
 };
 const New = async (jwt: string, nombre: string, detalle: string) => {
   const newObj = {
