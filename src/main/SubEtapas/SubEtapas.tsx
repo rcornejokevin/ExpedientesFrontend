@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { GetList as GetListEtapas, ItemEtapa } from '@/models/Etapas';
-import { GetList as GetListFlujos, ItemFlujo } from '@/models/Flujos';
 import {
   Delete as DeleteSubEtapa,
   Edit as EditSubEtapa,
@@ -30,16 +28,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import Cards from '@/components/Cards';
 import ConfirmationDialog from '@/components/confirmationDialog';
+import { Field as FieldEtapa } from '../Etapas/Field';
+import { Field as FieldFlujo } from '../Flujos/Field';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
 
 export default function SubEtapas() {
@@ -54,19 +47,14 @@ export default function SubEtapas() {
       flujo: '',
     },
   });
-  const [selectItemsFlujo, setSelectItemsFlujo] = useState<ItemFlujo[]>();
-  const [selectItemsEtapa, setSelectItemsEtapa] = useState<ItemEtapa[]>();
   const [items, setItems] = useState<ItemSubEtapa[]>(initialItems);
-  const [itemToEdit, setItemToEdit] = useState<ItemEtapa>();
-  const [itemToDelete, setItemToDelete] = useState<ItemEtapa>();
+  const [itemToEdit, setItemToEdit] = useState<ItemSubEtapa>();
+  const [itemToDelete, setItemToDelete] = useState<ItemSubEtapa>();
   const [loading, setLoading] = useState<boolean>(false);
   const { setAlert, alert } = useFlash();
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const selectedFlujo = form.watch('flujo');
   const selectedEtapa = form.watch('etapa');
-  const filteredEtapa = selectItemsEtapa?.filter(
-    (i) => String(i.flujo ?? '') === String(selectedFlujo ?? ''),
-  );
   const filteredItems = items.filter(
     (i) => String(i.etapa ?? '') === String(selectedEtapa ?? ''),
   );
@@ -89,35 +77,6 @@ export default function SubEtapas() {
         setAlert({ type: 'error', message: response.message });
       }
     };
-    const fetchDataEtapa = async () => {
-      const response = await GetListEtapas(user?.jwt ?? '');
-      if (response.code === '000') {
-        const data = response.data;
-        const mapped: any = data.map((f: any) => ({
-          id: String(f.id),
-          nombre: f.nombre,
-          flujo: f.flujoId,
-        }));
-        setSelectItemsEtapa(mapped);
-      } else {
-        setAlert({ type: 'error', message: response.message });
-      }
-    };
-    const fetchDataFlujo = async () => {
-      const response = await GetListFlujos(user?.jwt ?? '');
-      if (response.code === '000') {
-        const data = response.data;
-        const mapped: any = data.map((f: any) => ({
-          id: String(f.id),
-          nombre: f.nombre,
-        }));
-        setSelectItemsFlujo(mapped);
-      } else {
-        setAlert({ type: 'error', message: response.message });
-      }
-    };
-    fetchDataEtapa();
-    fetchDataFlujo();
     fetchDataSubEtapa();
   }, [alert, 0]);
   // Memoized selected flujo and filtered etapas
@@ -126,7 +85,7 @@ export default function SubEtapas() {
     form.reset({ nombre: '', ayuda: '', flujo: '', etapa: '' });
     form.clearErrors();
   };
-  const deleteItem = (item: ItemEtapa) => {
+  const deleteItem = (item: ItemSubEtapa) => {
     const fetchData = async () => {
       const responseFlujos = await DeleteSubEtapa(
         user?.jwt ?? '',
@@ -194,7 +153,7 @@ export default function SubEtapas() {
       setLoading(false);
     }
   }
-  const loadToDelete = (item: ItemFlujo) => {
+  const loadToDelete = (item: ItemSubEtapa) => {
     setItemToDelete(item);
     setOpenDialog(true);
   };
@@ -250,41 +209,12 @@ export default function SubEtapas() {
             <div className="flex">
               <div className="basis-2/5">
                 <div className="flex flex-col mr-5">
-                  <FormField
-                    control={form.control}
-                    name="flujo" // asegúrate que en tu schema sea string
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg color-dark-blue-marn font-bold">
-                          SELECCIONE UN FLUJO
-                        </FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={(val) => {
-                              field.onChange(val);
-                              setItemToEdit(undefined);
-                            }}
-                            value={field.value}
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione un Flujo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {selectItemsFlujo?.map((item) => (
-                                <SelectItem
-                                  key={item.id}
-                                  value={String(item.id)}
-                                >
-                                  {item.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <FieldFlujo
+                    form={form}
+                    onChange={() => {
+                      setItemToEdit(undefined);
+                      setItemToDelete(undefined);
+                    }}
                   />
                 </div>
               </div>
@@ -295,41 +225,12 @@ export default function SubEtapas() {
               </div>
               <div className="basis-2/5">
                 <div className="flex flex-col mr-5">
-                  <FormField
-                    control={form.control}
-                    name="etapa" // asegúrate que en tu schema sea string
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg color-dark-blue-marn font-bold">
-                          SELECCIONE UNA ETAPA
-                        </FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={(val) => {
-                              field.onChange(val);
-                              setItemToEdit(undefined);
-                            }}
-                            value={field.value}
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione una etapa" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {filteredEtapa?.map((item) => (
-                                <SelectItem
-                                  key={item.id}
-                                  value={String(item.id)}
-                                >
-                                  {item.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <FieldEtapa
+                    form={form}
+                    onChange={() => {
+                      setItemToEdit(undefined);
+                      setItemToDelete(undefined);
+                    }}
                   />
                 </div>
               </div>

@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '@/lib/utils';
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
 import { cva } from 'class-variance-authority';
 import { ChevronDownIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 function NavigationMenu({
   className,
@@ -109,6 +109,7 @@ function NavigationMenuViewport({
       className={cn(
         'absolute top-full left-0 isolate z-50 flex justify-center',
       )}
+      style={{ left: '300px', width: '200px' }}
     >
       <NavigationMenuPrimitive.Viewport
         data-slot="navigation-menu-viewport"

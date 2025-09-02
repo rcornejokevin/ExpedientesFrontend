@@ -23,7 +23,7 @@ export function MegaMenu() {
     hover:bg-transparent focus:bg-transparent flex flex-row
     data-[active=true]:text-green-marn data-[active=true]:bg-transparent 
     data-[state=open]:text-white data-[state=open]:bg-transparent
-    
+    hover:text-white hover:font-bold
   `;
   const linkClass2 = `
     text-sm text-secondary-foreground text-secondary font-medium rounded-none px-0  border-transparent
@@ -32,7 +32,8 @@ export function MegaMenu() {
     data-[active=true]:text-green-marn data-[active=true]:bg-transparent data-[active=true]:border-mono
     data-[state=open]:text-mono data-[state=open]:bg-transparent
     data-[active=false]:bg-transparent data-[state=closed]:bg-transparent
-    data-[active=true]:border-mono
+    data-[active=true]:border-mono  data-[state=open]:text-white data-[state=open]:font-bold
+    hover:text-white hover:font-bold
   `;
   return (
     <NavigationMenu>
@@ -77,7 +78,6 @@ export function MegaMenu() {
           </NavigationMenuLink>
         </NavigationMenuItem>
 
-        {/* My Account Item */}
         <NavigationMenuItem>
           <NavigationMenuTrigger
             className={cn(linkClass2)}
@@ -92,7 +92,10 @@ export function MegaMenu() {
             )}
             &nbsp;{myAccountItem.title}
           </NavigationMenuTrigger>
-          <NavigationMenuContent className="p-0">
+          <NavigationMenuContent
+            className="p-0"
+            style={{ backgroundColor: '#1DC4D8' }}
+          >
             <MegaMenuSubProfiles items={MENU_MEGA} />
           </NavigationMenuContent>
         </NavigationMenuItem>

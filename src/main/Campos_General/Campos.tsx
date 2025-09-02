@@ -8,22 +8,6 @@ import {
   New as NewCampo,
   Orden as OrdenCampo,
 } from '@/models/Campos';
-import { GetList as GetListFlujos, ItemFlujo } from '@/models/Flujos';
-import {
-  closestCenter,
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlignRight,
@@ -31,7 +15,6 @@ import {
   Pencil,
   Plus,
   PlusIcon,
-  Trash2,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Alerts, { useFlash } from '@/lib/alerts';
@@ -55,6 +38,7 @@ import {
 } from '@/components/ui/select';
 import Cards from '@/components/Cards';
 import ConfirmationDialog from '@/components/confirmationDialog';
+import { Field as FieldFlujo } from '../Flujos/Field';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
 
 export default function CamposGeneral() {
@@ -69,7 +53,6 @@ export default function CamposGeneral() {
       flujo: '',
     },
   });
-  const [selectItemsFlujo, setSelectItemsFlujo] = useState<ItemFlujo[]>();
   const [items, setItems] = useState<ItemCampo[]>(initialItems);
   const [itemToEdit, setItemToEdit] = useState<ItemCampo>();
   const [itemToDelete, setItemToDelete] = useState<ItemCampo>();
@@ -82,26 +65,7 @@ export default function CamposGeneral() {
       String(i.etapa ?? '') === '' && String(i.flujo ?? '') === selectedFlujo,
   );
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-  );
   //Functions
-  useEffect(() => {
-    const fetchDataFlujo = async () => {
-      const response = await GetListFlujos(user?.jwt ?? '');
-      if (response.code === '000') {
-        const data = response.data;
-        const mapped: any = data.map((f: any) => ({
-          id: String(f.id),
-          nombre: f.nombre,
-        }));
-        setSelectItemsFlujo(mapped);
-      } else {
-        setAlert({ type: 'error', message: response.message });
-      }
-    };
-    fetchDataFlujo();
-  }, [0]);
   useEffect(() => {
     const fetchData = async () => {
       const response = await GetListCampo(user?.jwt ?? '');
@@ -143,7 +107,7 @@ export default function CamposGeneral() {
       if (responseFlujos.code == '000') {
         setAlert({
           type: 'success',
-          message: 'Etapa eliminado correctamente.',
+          message: 'Campo eliminado correctamente.',
         });
       }
     };
@@ -235,16 +199,6 @@ export default function CamposGeneral() {
       setLoading(false);
     }
   };
-  async function handleDragEnd(e: DragEndEvent) {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = items.findIndex((i) => i.id === String(active.id));
-    const newIndex = items.findIndex((i) => i.id === String(over.id));
-    const reordered = arrayMove(items, oldIndex, newIndex);
-    setItems(reordered);
-    onReorder?.(reordered);
-  }
   return (
     <>
       <div className="mx-5 my-5">
@@ -269,38 +223,12 @@ export default function CamposGeneral() {
 
             <div className="flex">
               <div className="flex mr-5 w-full">
-                <FormField
-                  control={form.control}
-                  name="flujo" // asegúrate que en tu schema sea string
-                  render={({ field }) => (
-                    <FormItem className="w-[50%]">
-                      <FormLabel className="text-lg color-dark-blue-marn font-bold">
-                        SELECCIONE UN FLUJO
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={(val) => {
-                            field.onChange(val);
-                            setItemToEdit(undefined);
-                          }}
-                          value={field.value}
-                          defaultValue={field.value}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccione un Flujo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {selectItemsFlujo?.map((item) => (
-                              <SelectItem key={item.id} value={String(item.id)}>
-                                {item.nombre}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <FieldFlujo
+                  form={form}
+                  onChange={() => {
+                    setItemToEdit(undefined);
+                    setItemToDelete(undefined);
+                  }}
                 />
               </div>
             </div>

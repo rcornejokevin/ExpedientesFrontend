@@ -8,7 +8,6 @@ import {
   New as NewEtapa,
   Orden as OrdenEtapa,
 } from '@/models/Etapas';
-import { GetList as GetListFlujos, ItemFlujo } from '@/models/Flujos';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlignRight,
@@ -29,16 +28,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import Cards from '@/components/Cards';
 import ConfirmationDialog from '@/components/confirmationDialog';
+import { Field as FieldFlujo } from '../Flujos/Field';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
 
 export default function Etapas() {
@@ -53,7 +46,6 @@ export default function Etapas() {
       flujo: '',
     },
   });
-  const [selectItems, setSelectItems] = useState<ItemFlujo[]>();
   const [items, setItems] = useState<ItemEtapa[]>(initialItems);
   const [itemToEdit, setItemToEdit] = useState<ItemEtapa>();
   const [itemToDelete, setItemToDelete] = useState<ItemEtapa>();
@@ -61,7 +53,7 @@ export default function Etapas() {
   const { setAlert, alert } = useFlash();
   const [openDialog, setOpenDialog] = useState<boolean>(false);
 
-  const loadToDelete = (item: ItemFlujo) => {
+  const loadToDelete = (item: ItemEtapa) => {
     setItemToDelete(item);
     setOpenDialog(true);
   };
@@ -84,21 +76,7 @@ export default function Etapas() {
         setAlert({ type: 'error', message: response.message });
       }
     };
-    const fetchDataFlujo = async () => {
-      const response = await GetListFlujos(user?.jwt ?? '');
-      if (response.code === '000') {
-        const data = response.data;
-        const mapped: any = data.map((f: any) => ({
-          id: String(f.id),
-          nombre: f.nombre,
-        }));
-        setSelectItems(mapped);
-      } else {
-        setAlert({ type: 'error', message: response.message });
-      }
-    };
     fetchDataEtapa();
-    fetchDataFlujo();
   }, [alert, 0]);
   // Memoized selected flujo and filtered etapas
   const selectedFlujo = form.watch('flujo');
@@ -111,11 +89,11 @@ export default function Etapas() {
   };
   const deleteItem = (item: ItemEtapa) => {
     const fetchData = async () => {
-      const responseFlujos = await DeleteEtapa(
+      const responseEtapa = await DeleteEtapa(
         user?.jwt ?? '',
         Number.parseInt(item.id ?? ''),
       );
-      if (responseFlujos.code == '000') {
+      if (responseEtapa.code == '000') {
         setAlert({
           type: 'success',
           message: 'Etapa eliminado correctamente.',
@@ -225,41 +203,12 @@ export default function Etapas() {
             <div className="flex">
               <div className="basis-1/2">
                 <div className="flex flex-col mr-50">
-                  <FormField
-                    control={form.control}
-                    name="flujo" // asegúrate que en tu schema sea string
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg color-dark-blue-marn font-bold">
-                          SELECCIONE UN FLUJO
-                        </FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={(val) => {
-                              field.onChange(val);
-                              setItemToEdit(undefined);
-                            }}
-                            value={field.value}
-                            defaultValue={field.value}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione un Flujo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {selectItems?.map((item) => (
-                                <SelectItem
-                                  key={item.id}
-                                  value={String(item.id)}
-                                >
-                                  {item.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                  <FieldFlujo
+                    form={form}
+                    onChange={() => {
+                      setItemToEdit(undefined);
+                      setItemToDelete(undefined);
+                    }}
                   />
                 </div>
               </div>
