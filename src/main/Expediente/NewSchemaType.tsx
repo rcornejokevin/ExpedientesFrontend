@@ -6,8 +6,8 @@ interface ApiField {
   nombre: string;
   requerido: boolean;
   tipo: tipo;
-  etapaDetalleId?: string;
   etapaId?: string;
+  flujoId: string;
 }
 
 export type ApiSchemaConfig = {
@@ -16,6 +16,7 @@ export type ApiSchemaConfig = {
 
 export const getNewSchema = (cfg: ApiSchemaConfig) => {
   const shape: Record<string, any> = {};
+  shape['CODIGO'] = z.string().min(1, 'El codigo es requerido');
   shape['NOMBRE DE EXPEDIENTE'] = z.string().min(1, 'El nombre es requerido');
   shape['FECHA DE INGRESO'] = z.string();
   shape['TIPO DE PROCESO'] = z.string().min(1, 'El flujo es requerido');

@@ -1,33 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { GetList as GetListCampo } from '@/models/Campos';
-import { GetList as GetListEtapas, ItemEtapa } from '@/models/Etapas';
-import { GetList as GetListFlujos, ItemFlujo } from '@/models/Flujos';
-import {
-  Delete as DeleteSubEtapa,
-  Edit as EditSubEtapa,
-  GetList as GetListSubEtapa,
-  ItemSubEtapa,
-  New as NewSubEtapa,
-  Orden as OrdenSubEtapa,
-} from '@/models/SubEtapas';
-import {
-  Edit as EditUsuario,
-  GetList as GetListUsuario,
-  New as NewUsuario,
-  Usuario,
-} from '@/models/Usuarios';
+import { GetList as GetListEtapas } from '@/models/Etapas';
+import { GetList as GetListFlujos } from '@/models/Flujos';
+import { GetList as GetListSubEtapa } from '@/models/SubEtapas';
+import { GetList as GetListUsuario } from '@/models/Usuarios';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Key, LoaderCircleIcon, LucideUser, SquarePenIcon } from 'lucide-react';
+import {
+  FileImage,
+  LoaderCircleIcon,
+  Network,
+  SquarePenIcon,
+} from 'lucide-react';
 import { Text } from 'react-aria-components';
 import { useForm } from 'react-hook-form';
 import Alerts, { useFlash } from '@/lib/alerts';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogBody,
-  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -40,7 +31,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input, InputAddon, InputGroup } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -48,8 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import datePicker from '@/components/datePicker';
 import DatePickerMarn from '@/components/datePicker';
+import PdfUpload from '@/components/pdf-upload';
 import { ApiSchemaConfig, getNewSchema } from './NewSchemaType';
 
 interface AddUsuarioI {
@@ -67,7 +59,7 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
   const [loading, setLoading] = useState<boolean>(false);
   const { user } = useAuth();
   const { setAlert } = useFlash();
-  const [schemaCfg, setSchemaCfg] = useState<ApiSchemaConfig | null>(null);
+  const [schemaCfg, setSchemaCfg] = useState<ApiSchemaConfig | null>();
   const [filteredSchemaCfg, setFilteredSchemaCfg] =
     useState<ApiSchemaConfig | null>(null);
   const [flujo, setFlujo] = useState<ItemSelect[]>();
@@ -88,9 +80,10 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
               tipo: f.tipo,
               requerido: f.requerido,
               etapaId: f.etapaId,
-              etapaDetalleId: f.etapaDetalleId,
+              flujoId: f.flujoId,
             }))),
         ];
+        console.log(cfg);
         setSchemaCfg(cfg);
       } else {
         setAlert({ type: 'error', message: response.message });
@@ -165,64 +158,23 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
 
   const defaultValues = useMemo(() => {
     if (!schemaCfg) return {};
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
     const def: Record<string, any> = {};
     for (const f of schemaCfg.fields) {
       def[f.nombre] = '';
     }
+    def['CODIGO'] =
+      `#${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
     return def;
   }, [schemaCfg]);
-
   const form = useForm<Record<string, any>>({
     resolver: schema ? zodResolver(schema) : undefined,
     defaultValues,
     mode: 'onSubmit',
     reValidateMode: 'onChange',
   });
-  const resetForm = () => {
-    form.reset({
-      username: '',
-      perfil: '',
-    });
-    form.clearErrors();
-  };
-  async function onSubmit(values: Record<string, any>) {
-    setLoading(true);
-    try {
-      let response: any = null;
-      if (edit == false) {
-        const newUser: Usuario = {
-          username: values.username,
-          perfil: values.perfil,
-        };
-        response = await NewUsuario(user?.jwt ?? '', newUser);
-      } else if (usuario != undefined) {
-        const itemEditted: Usuario = usuario;
-        itemEditted.username = values.username;
-        itemEditted.perfil = values.perfil;
-        response = await EditUsuario(user?.jwt ?? '', itemEditted);
-      }
-      if (response.code == '000') {
-        if (edit) {
-          setAlert({
-            type: 'success',
-            message: 'Usuario editado correctamente.',
-          });
-        } else {
-          setAlert({
-            type: 'success',
-            message: 'Usuario creado correctamente.',
-          });
-        }
-        resetForm();
-      } else {
-        setAlert({ type: 'error', message: response.message });
-      }
-    } catch (error) {
-      setAlert({ type: 'error', message: `${error}` });
-    } finally {
-      setLoading(false);
-    }
-  }
+  async function onSubmit(values: Record<string, any>) {}
   function changeFunction(value: any) {
     const firstEtapa = etapa?.filter((item: ItemSelect) => item.padre == value);
     let valueEtapa = '';
@@ -244,23 +196,13 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
     } else {
       valueEtapa = '[SIN PRIMERA ETAPA]';
     }
-    if (idSubEtapa) {
-      const mapped = schemaCfg?.fields.filter((item) => {
-        return Number(item.etapaDetalleId) === idSubEtapa;
-      });
-      setFilteredSchemaCfg(mapped ? { fields: mapped } : null);
-    }
-    if (!idSubEtapa) {
-      const mapped = schemaCfg?.fields.filter((item) => {
-        return Number(item.etapaId) === idEtapa;
-      });
-      setFilteredSchemaCfg(mapped ? { fields: mapped } : null);
-    }
+    const mapped = schemaCfg?.fields.filter(
+      (item) => Number(item.flujoId) === Number(value),
+    );
+    setFilteredSchemaCfg(mapped ? { fields: mapped } : null);
 
-    form.reset({
-      'ESTATUS ACTUAL': valueEtapa,
-      'SUB-ETAPA ACTUAL': valueSubEtapa,
-    });
+    form.setValue('ESTATUS ACTUAL', valueEtapa, { shouldValidate: true });
+    form.setValue('SUB-ETAPA ACTUAL', valueSubEtapa, { shouldValidate: true });
   }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -307,8 +249,36 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                   marginBottom: '-25px',
                 }}
               >
-                <div className="flex">
+                <div className="flex overflow-y-auto max-h-130">
                   <div className="basis-1/2 space-y-5  mx-5">
+                    <FormField
+                      control={form.control}
+                      defaultValue={defaultValues['CODIGO']}
+                      name={'CODIGO'}
+                      render={({ field }) => (
+                        <FormItem
+                          className="w-[60%]"
+                          style={{
+                            alignItems: 'cent',
+                          }}
+                        >
+                          <FormControl>
+                            <Input
+                              className="rounded-3xl"
+                              style={{
+                                backgroundColor: '#D9EC6C',
+                                textAlign: 'center',
+                                fontWeight: 'bold',
+                              }}
+                              readOnly={true}
+                              placeholder=""
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name={'NOMBRE DE EXPEDIENTE'}
@@ -318,7 +288,11 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                             NOMBRE DE EXPEDIENTE
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="" {...field} />
+                            <Input
+                              className="rounded-3xl"
+                              placeholder="Nombre del expediente..."
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -347,7 +321,7 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                               value={field.value}
                               defaultValue={field.value}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="rounded-3xl">
                                 <SelectValue placeholder="Seleccione un Flujo" />
                               </SelectTrigger>
                               <SelectContent>
@@ -375,7 +349,12 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                             ESTATUS ACTUAL
                           </FormLabel>
                           <FormControl>
-                            <Input readOnly={true} placeholder="" {...field} />
+                            <Input
+                              className="rounded-3xl"
+                              readOnly={true}
+                              placeholder=""
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -387,10 +366,15 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="color-dark-blue-marn font-bold">
-                            SUB-ETAPA ACTUAL
+                            ESTATUS ACTUAL
                           </FormLabel>
                           <FormControl>
-                            <Input readOnly={true} placeholder="" {...field} />
+                            <Input
+                              className="rounded-3xl"
+                              readOnly={true}
+                              placeholder=""
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -412,7 +396,7 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                               value={field.value}
                               defaultValue={field.value}
                             >
-                              <SelectTrigger>
+                              <SelectTrigger className="rounded-3xl">
                                 <SelectValue placeholder="Seleccione un Asesor" />
                               </SelectTrigger>
                               <SelectContent>
@@ -433,6 +417,76 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                     />
                   </div>
                   <div className="basis-1/2 mx-5 space-y-5">
+                    <div className="flex items-center gap-2 mb-4 ">
+                      <FileImage
+                        fill="#2DA6DC"
+                        color="white"
+                        className="size-7"
+                      />
+                      <Label className="flex items-center gap-2 font-bold text-md color-dark-blue-marn">
+                        Miniatura del Expediente
+                      </Label>
+                    </div>
+                    <PdfUpload
+                      form={form}
+                      name={'PDF_EXPEDIENTE'}
+                      label={''}
+                      height={260}
+                    />
+                    <div className="flex items-center gap-2 mb-4 ">
+                      <Network color="#2DA6DC" className="size-7" />
+                      <Label className="flex items-center gap-2 font-bold text-md color-dark-blue-marn">
+                        Etapa del Expediente
+                      </Label>
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name={'ESTATUS ACTUAL'}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="color-dark-blue-marn font-bold">
+                            ETAPA ACTUAL
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              className="rounded-3xl"
+                              readOnly={true}
+                              placeholder=""
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={'SUB-ETAPA ACTUAL'}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="color-dark-blue-marn font-bold">
+                            SUB-ETAPA ACTUAL
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              className="rounded-3xl"
+                              readOnly={true}
+                              placeholder=""
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DatePickerMarn
+                      form={form}
+                      name={'FECHA DE ÚLTIMA ETAPA'}
+                      label={'FECHA DE ÚLTIMA ETAPA'}
+                      readOnly={true}
+                      defaultValue={new Date().toISOString()}
+                      formatStr="d 'de' MMMM 'de' yyyy"
+                    />
                     {filteredSchemaCfg?.fields.map((f) => (
                       <>
                         {f.tipo == 'Fecha' ? (
@@ -467,6 +521,7 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                     ))}
                     <div className="flex justify-end">
                       <Button
+                        className="rounded-3xl"
                         type="submit"
                         style={{ backgroundColor: '#2DA6DC' }}
                       >

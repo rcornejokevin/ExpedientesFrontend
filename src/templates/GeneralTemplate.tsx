@@ -45,12 +45,16 @@ const GeneralTemplate = () => {
       <div className="flex grow flex-col in-data-[sticky-header=on]:pt-(--header-height-default)">
         <Header isMenuShowed={true} />
 
-        <div
-          className="grow"
-          role="content"
-          style={{ backgroundColor: '#FBFBFD' }}
-        >
-          <Outlet />
+        <div className="grow" role="content">
+          <div className="h-full top-0 left-0 w-full bg-gradient-to-b from-[#FFFFFF] to-[#E2E8EB] z-0">
+            <img
+              src="/public/media/images/marn_volcanes.png"
+              className="absolute bottom-0 w-full object-cover z-10"
+            />
+            <div className="relative z-20">
+              <Outlet />
+            </div>
+          </div>
         </div>
 
         <Footer />

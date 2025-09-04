@@ -221,16 +221,14 @@ export default function CamposGeneral() {
               </Label>
             </div>
 
-            <div className="flex">
-              <div className="flex mr-5 w-full">
-                <FieldFlujo
-                  form={form}
-                  onChange={() => {
-                    setItemToEdit(undefined);
-                    setItemToDelete(undefined);
-                  }}
-                />
-              </div>
+            <div className="w-[30%]">
+              <FieldFlujo
+                form={form}
+                onChange={() => {
+                  setItemToEdit(undefined);
+                  setItemToDelete(undefined);
+                }}
+              />
             </div>
             <hr className="border-e border-border my-5" />
             {(form.watch('flujo') ?? '') !== '' ? (
