@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { GetList as GetListCampo } from '@/models/Campos';
 import { GetList as GetListEtapas } from '@/models/Etapas';
+import { CampoConValor, ItemExpediente, New } from '@/models/Expediente';
 import { GetList as GetListFlujos } from '@/models/Flujos';
 import { GetList as GetListSubEtapa } from '@/models/SubEtapas';
 import { GetList as GetListUsuario } from '@/models/Usuarios';
@@ -10,12 +11,14 @@ import {
   FileImage,
   LoaderCircleIcon,
   Network,
+  Printer,
   SquarePenIcon,
 } from 'lucide-react';
 import { Text } from 'react-aria-components';
 import { useForm } from 'react-hook-form';
 import Alerts, { useFlash } from '@/lib/alerts';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogBody,
@@ -41,6 +44,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import DatePickerMarn from '@/components/datePicker';
+import handlePrint from '@/components/pageToPrint';
 import PdfUpload from '@/components/pdf-upload';
 import { ApiSchemaConfig, getNewSchema } from './NewSchemaType';
 
@@ -57,6 +61,7 @@ interface ItemSelect {
 }
 export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
   const [loading, setLoading] = useState<boolean>(false);
+  const [print, setPrint] = useState<boolean>(true);
   const { user } = useAuth();
   const { setAlert } = useFlash();
   const [schemaCfg, setSchemaCfg] = useState<ApiSchemaConfig | null>();
@@ -81,9 +86,11 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
               requerido: f.requerido,
               etapaId: f.etapaId,
               flujoId: f.flujoId,
+              opciones: f.opciones,
+              label: f.label,
+              placeholder: f.placeholder,
             }))),
         ];
-        console.log(cfg);
         setSchemaCfg(cfg);
       } else {
         setAlert({ type: 'error', message: response.message });
@@ -152,10 +159,22 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
     fetchDataUsuario();
     fetchDataSubEtapa();
     fetchDataEtapa();
-  }, [user?.jwt]);
+  }, [open]);
 
-  const schema = schemaCfg ? getNewSchema(schemaCfg) : null;
-
+  const schema = getNewSchema(filteredSchemaCfg ?? { fields: [] });
+  const schemaRef = useRef<any>(schema);
+  useEffect(() => {
+    schemaRef.current = schema;
+  }, [schema]);
+  const resolver = useCallback(async (values: any, ctx: any, opts: any) => {
+    if (!schemaRef.current) return { values, errors: {} };
+    const fn = zodResolver(schemaRef.current);
+    return fn(values, ctx, opts);
+  }, []);
+  const resetForm = () => {
+    form.reset();
+    form.clearErrors();
+  };
   const defaultValues = useMemo(() => {
     if (!schemaCfg) return {};
     const now = new Date();
@@ -164,17 +183,66 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
     for (const f of schemaCfg.fields) {
       def[f.nombre] = '';
     }
+    def['ASESOR ASIGNADO'] = '';
+    def['FECHA DE INGRESO'] = '';
+    def['NOMBRE DE EXPEDIENTE'] = '';
+    def['TIPO DE PROCESO'] = '';
+    def['ESTATUS ACTUAL'] = '';
+    def['SUB-ETAPA ACTUAL'] = '';
     def['CODIGO'] =
       `#${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    def['FECHA DE ÚLTIMA ETAPA'] = new Date().toISOString();
     return def;
   }, [schemaCfg]);
   const form = useForm<Record<string, any>>({
-    resolver: schema ? zodResolver(schema) : undefined,
+    resolver,
     defaultValues,
     mode: 'onSubmit',
     reValidateMode: 'onChange',
   });
-  async function onSubmit(values: Record<string, any>) {}
+  useEffect(() => {
+    if (defaultValues && Object.keys(defaultValues).length > 0) {
+      form.reset(defaultValues);
+    }
+  }, [JSON.stringify(defaultValues)]);
+  async function onSubmit(values: Record<string, any>) {
+    setLoading(true);
+    let camposAdicionales: CampoConValor[] | undefined =
+      filteredSchemaCfg?.fields.map((item) => ({
+        label: item.label,
+        tipoCampo: item.tipo,
+        valor: values[item.nombre],
+      }));
+    try {
+      let response: any = null;
+      const newExpediente: ItemExpediente = {
+        CODIGO: values['CODIGO'],
+        'NOMBRE DE EXPEDIENTE': values['NOMBRE DE EXPEDIENTE'],
+        'TIPO DE PROCESO': values['TIPO DE PROCESO'],
+        'SUB-ETAPA ACTUAL': values['SUB-ETAPA ACTUAL'],
+        'FECHA DE INGRESO': values['FECHA DE INGRESO'],
+        'ASESOR ASIGNADO': values['ASESOR ASIGNADO'],
+        'FECHA DE ÚLTIMA ETAPA': values['FECHA DE ÚLTIMA ETAPA'],
+        PDF_EXPEDIENTE: values['PDF_EXPEDIENTE'],
+        camposAdicionales: camposAdicionales,
+      };
+      response = await New(user?.jwt ?? '', newExpediente);
+      if (response.code == '000') {
+        setOpen(false);
+        setAlert({
+          type: 'success',
+          message: 'Expediente creado correctamente.',
+        });
+        resetForm();
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    } catch (error) {
+      setAlert({ type: 'error', message: `${error}` });
+    } finally {
+      setLoading(false);
+    }
+  }
   function changeFunction(value: any) {
     const firstEtapa = etapa?.filter((item: ItemSelect) => item.padre == value);
     let valueEtapa = '';
@@ -362,26 +430,6 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                     />
                     <FormField
                       control={form.control}
-                      name={'SUB-ETAPA ACTUAL'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            ESTATUS ACTUAL
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              className="rounded-3xl"
-                              readOnly={true}
-                              placeholder=""
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
                       name={'ASESOR ASIGNADO'}
                       render={({ field }) => (
                         <FormItem>
@@ -390,6 +438,7 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                           </FormLabel>
                           <FormControl>
                             <Select
+                              name={'ASESOR ASIGNADO'}
                               onValueChange={(val) => {
                                 field.onChange(val);
                               }}
@@ -415,6 +464,76 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                         </FormItem>
                       )}
                     />
+                    {filteredSchemaCfg?.fields.map((f) => (
+                      <div key={f.nombre}>
+                        {f.tipo == 'Fecha' ? (
+                          <DatePickerMarn
+                            form={form}
+                            name={f.nombre}
+                            label={f.label}
+                          />
+                        ) : (
+                          <FormField
+                            key={f.nombre}
+                            control={form.control}
+                            name={f.nombre}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  {f.label}
+                                </FormLabel>
+                                <FormControl>
+                                  {f.tipo === 'Texto' ? (
+                                    <Input
+                                      placeholder={f.placeholder}
+                                      {...field}
+                                    />
+                                  ) : f.tipo === 'Numero' ? (
+                                    <Input
+                                      placeholder={f.placeholder}
+                                      type="number"
+                                      {...field}
+                                    />
+                                  ) : f.tipo === 'Opciones' ? (
+                                    <Select
+                                      onValueChange={(val) => {
+                                        field.onChange(val);
+                                      }}
+                                      value={field.value}
+                                      defaultValue={field.value}
+                                    >
+                                      <SelectTrigger className="rounded-3xl">
+                                        <SelectValue
+                                          placeholder={f.placeholder}
+                                        />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {f.opciones
+                                          ?.split(',')
+                                          .map((op) => op.trim())
+                                          .map((op) => (
+                                            <SelectItem key={op} value={op}>
+                                              {op}
+                                            </SelectItem>
+                                          ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <Checkbox
+                                      checked={!!field.value}
+                                      onCheckedChange={(checked) => {
+                                        field.onChange(checked === true);
+                                      }}
+                                    />
+                                  )}
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+                    ))}
                   </div>
                   <div className="basis-1/2 mx-5 space-y-5">
                     <div className="flex items-center gap-2 mb-4 ">
@@ -487,55 +606,44 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                       defaultValue={new Date().toISOString()}
                       formatStr="d 'de' MMMM 'de' yyyy"
                     />
-                    {filteredSchemaCfg?.fields.map((f) => (
-                      <>
-                        {f.tipo == 'Fecha' ? (
-                          <DatePickerMarn
-                            form={form}
-                            name={f.nombre}
-                            label={f.nombre}
-                          />
-                        ) : (
-                          <FormField
-                            key={f.nombre}
-                            control={form.control}
-                            name={f.nombre}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="color-dark-blue-marn font-bold">
-                                  {f.nombre}
-                                </FormLabel>
-                                <FormControl>
-                                  <>
-                                    {f.tipo == 'Texto' ? (
-                                      <Input placeholder="" {...field} />
-                                    ) : null}
-                                  </>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                      </>
-                    ))}
                     <div className="flex justify-end">
-                      <Button
-                        className="rounded-3xl"
-                        type="submit"
-                        style={{ backgroundColor: '#2DA6DC' }}
-                      >
-                        <Text className="text-white font-bold text-md">
-                          {loading ? (
-                            <span className="flex items-center gap-2">
-                              <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                              Cargando...
-                            </span>
-                          ) : (
-                            'GUARDAR EXPEDIENTE'
-                          )}
-                        </Text>
-                      </Button>
+                      {print ? (
+                        <Button
+                          className="rounded-3xl mr-3"
+                          type="button"
+                          style={{ backgroundColor: 'white' }}
+                          onClick={handlePrint}
+                        >
+                          <Text className="text-[#192854] font-bold text-md">
+                            {loading ? (
+                              <span className="flex items-center gap-2">
+                                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                                Cargando...
+                              </span>
+                            ) : (
+                              'IMPRIMIR CARÁTULA'
+                            )}
+                          </Text>
+                          <Printer color="#D9EC6C" />
+                        </Button>
+                      ) : (
+                        <Button
+                          className="rounded-3xl"
+                          type="submit"
+                          style={{ backgroundColor: '#2DA6DC' }}
+                        >
+                          <Text className="text-white font-bold text-md">
+                            {loading ? (
+                              <span className="flex items-center gap-2">
+                                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                                Cargando...
+                              </span>
+                            ) : (
+                              'GUARDAR EXPEDIENTE'
+                            )}
+                          </Text>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

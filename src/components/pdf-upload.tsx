@@ -82,14 +82,21 @@ export default function PdfUpload({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (f.type !== 'application/pdf') {
-      if (!f.name.toLowerCase().endsWith('.pdf')) return;
+    const isPdf =
+      f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      form.setError(name, {
+        type: 'manual',
+        message: 'El archivo debe ser un PDF',
+      });
+      return;
     }
-    form.setValue(name, f, { shouldDirty: true, shouldValidate: false });
+    form.clearErrors(name);
+    form.setValue(name, f, { shouldDirty: true, shouldValidate: true });
   };
 
   const clearFile = () => {
-    form.setValue(name, null, { shouldDirty: true, shouldValidate: false });
+    form.setValue(name, null, { shouldDirty: true, shouldValidate: true });
     if (inputRef.current) inputRef.current.value = '';
   };
 

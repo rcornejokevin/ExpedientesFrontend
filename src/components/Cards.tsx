@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   closestCenter,
   DndContext,
@@ -22,6 +22,7 @@ interface iCards {
   loadToEdit: any;
   loadToDelete: any;
   onReorder?: any;
+  type?: string;
 }
 const Cards = ({
   isOrdered,
@@ -29,8 +30,14 @@ const Cards = ({
   loadToEdit,
   loadToDelete,
   onReorder,
+  type = 'general',
 }: iCards) => {
-  const [itemEditted, setItemEditted] = useState(items);
+  const [itemEditted, setItemEditted] = useState<any>(undefined);
+  useEffect(() => {
+    if (!itemEditted) return;
+    const stillExists = items?.some((i: any) => i?.id === itemEditted?.id);
+    if (!stillExists) setItemEditted(undefined as any);
+  }, [items, itemEditted]);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
@@ -74,10 +81,16 @@ const Cards = ({
       >
         <div className="pr-3">
           <div className="text-[17px] font-extrabold text-[#1E2851]">
-            {item.nombre}
+            {item.nombre}{' '}
+            {(type === 'campo' || type === 'campo_general') && `(${item.tipo})`}
           </div>
-          {item.ayuda && (
-            <div className="text-[12px] text-[#1E2851]/60">{item.ayuda}</div>
+          {type === 'general' && (
+            <div className="text-[14px] text-[#1E2851]/80">{item.ayuda}</div>
+          )}
+          {(type === 'campo' || type == 'campo_general') && (
+            <div className="text-[14px] text-[#1E2851]/80">
+              {item.label} {item.requerido ? '(Requerido)' : '(Opcional)'}
+            </div>
           )}
         </div>
 

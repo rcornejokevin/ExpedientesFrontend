@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/select';
 import Cards from '@/components/Cards';
 import ConfirmationDialog from '@/components/confirmationDialog';
+import OptionsTagsInput from '@/components/tags';
 import { Field as FieldEtapa } from '../Etapas/Field';
 import { Field as FieldFlujo } from '../Flujos/Field';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
@@ -52,6 +53,11 @@ export default function Campos() {
       nombre: '',
       etapa: '',
       tipo: '',
+      requerido: false,
+      flujo: '',
+      label: '',
+      placeholder: '',
+      opciones: '',
     },
   });
   const [items, setItems] = useState<ItemCampo[]>(initialItems);
@@ -81,6 +87,9 @@ export default function Campos() {
             orden: f.orden,
             requerido: f.requerido,
             tipo: f.tipo,
+            label: f.label,
+            placeHolder: f.placeholder,
+            opciones: f.opciones,
           }));
         setItems(mapped);
       } else {
@@ -96,6 +105,9 @@ export default function Campos() {
       etapa: '',
       tipo: '',
       requerido: false,
+      label: '',
+      placeholder: '',
+      opciones: '',
     });
     form.clearErrors();
   };
@@ -126,6 +138,9 @@ export default function Campos() {
       etapa: item.etapa == null || item.etapa == '' ? 'all' : item.etapa,
       requerido: item.requerido,
       tipo: item.tipo,
+      label: item.label ?? '',
+      placeholder: item.placeHolder ?? '',
+      opciones: item.opciones ?? '',
     });
     form.clearErrors();
   };
@@ -141,6 +156,9 @@ export default function Campos() {
           requerido: values.requerido ?? false,
           etapa: values.etapa,
           flujo: values.flujo,
+          label: values.label ?? '',
+          placeHolder: values.placeholder ?? '',
+          opciones: values.opciones ?? '',
         };
         response = await NewCampo(user?.jwt ?? '', itemCampoAdd);
       } else {
@@ -150,6 +168,9 @@ export default function Campos() {
         itemEditted.etapa = values.etapa;
         itemEditted.flujo = values.flujo;
         itemEditted.requerido = values.requerido ?? false;
+        itemEditted.label = values.label ?? '';
+        itemEditted.placeHolder = values.placeholder ?? '';
+        itemEditted.opciones = values.opciones ?? '';
         response = await EditCampo(user?.jwt ?? '', itemEditted);
       }
       if (response.code == '000') {
@@ -248,6 +269,7 @@ export default function Campos() {
               <div className="basis-4/9">
                 <div className="flex flex-col mr-5">
                   <FieldEtapa
+                    addEmpty={true}
                     form={form}
                     onChange={() => {
                       setItemToEdit(undefined);
@@ -271,6 +293,7 @@ export default function Campos() {
                       <div className="flex">
                         <Cards
                           items={filteredItems}
+                          type="campo"
                           onReorder={onReorder}
                           loadToEdit={loadToEdit}
                           isOrdered={true}
@@ -320,6 +343,44 @@ export default function Campos() {
                           />
                           <FormField
                             control={form.control}
+                            name="label"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  LABEL DEL CAMPO
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Ingrese el label del campo"
+                                    className="rounded-3xl"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="placeholder"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  PLACEHOLDER DEL CAMPO
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Ingrese el placeholder del campo"
+                                    className="rounded-3xl"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
                             name="tipo"
                             render={({ field }) => (
                               <FormItem>
@@ -348,6 +409,12 @@ export default function Campos() {
                                       <SelectItem value="Fecha">
                                         Fecha
                                       </SelectItem>
+                                      <SelectItem value="Opciones">
+                                        Opciones
+                                      </SelectItem>
+                                      <SelectItem value="Cheque">
+                                        Cheque
+                                      </SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </FormControl>
@@ -355,6 +422,29 @@ export default function Campos() {
                               </FormItem>
                             )}
                           />
+                          {form.watch('tipo') === 'Opciones' ? (
+                            <FormField
+                              control={form.control}
+                              name="opciones"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="color-dark-blue-marn font-bold">
+                                    Opciones Disponibles
+                                  </FormLabel>
+                                  <FormControl>
+                                    <OptionsTagsInput
+                                      value={field.value}
+                                      onChange={field.onChange}
+                                      placeholder="Añade una opción y presiona Enter"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          ) : (
+                            <></>
+                          )}
                           <FormField
                             control={form.control}
                             name="requerido" // debe ser boolean en tu schema

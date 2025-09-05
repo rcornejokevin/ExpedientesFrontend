@@ -37,7 +37,7 @@ const LoginTemplate = () => {
         <div className="flex grow" role="content">
           <div className="flex flex-col items-center justify-center grow h-full top-0 left-0 w-full bg-gradient-to-b from-[#FFFFFF] to-[#E2E8EB] z-0">
             <img
-              src="/public/media/images/marn_volcanes.png"
+              src="/media/images/marn_volcanes.png"
               className="absolute bottom-0 w-full object-cover z-10"
             />
             <Card className="w-full max-w-[400px] relative z-20">

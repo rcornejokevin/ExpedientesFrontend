@@ -7,6 +7,11 @@ export const getNewSchema = () => {
     nombre: z.string().min(1, { message: 'El nombre del campo es requerido' }),
     tipo: z.string().min(1, { message: 'El nombre del campo es requerido' }),
     requerido: z.boolean().optional(),
+    placeholder: z
+      .string()
+      .min(1, { message: 'El placeholder del campo es requerido' }),
+    label: z.string().min(1, { message: 'El label del campo es requerido' }),
+    opciones: z.string().optional(),
   });
 };
 

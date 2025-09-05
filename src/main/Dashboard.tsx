@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Filter, FolderOpen, Plus, Search, TableIcon } from 'lucide-react';
+import Alerts, { useFlash } from '@/lib/alerts';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import NuevoExpediente from './Expediente/NuevoExpediente';
@@ -7,10 +8,13 @@ import NuevoExpediente from './Expediente/NuevoExpediente';
 const Dashboard = () => {
   const [open, setOpen] = useState<boolean>(false);
   const [isEdit, setIsEdit] = useState<boolean>(false);
+
   return (
     <>
       <NuevoExpediente open={open} setOpen={setOpen} edit={isEdit} />
+
       <div className="mx-5 mt-5">
+        <Alerts />
         <div className="flex gap-4">
           <div className="basis-4/5">
             <div className="flex items-center justify-between">

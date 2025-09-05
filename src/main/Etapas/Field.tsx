@@ -20,9 +20,10 @@ import {
 interface iField {
   form: any;
   onChange: any;
+  addEmpty?: boolean;
 }
 
-const Field = ({ form, onChange }: iField) => {
+const Field = ({ form, onChange, addEmpty = false }: iField) => {
   const { user } = useAuth();
   const { setAlert } = useFlash();
   const [items, setItems] = useState<ItemEtapa[]>();
@@ -70,6 +71,7 @@ const Field = ({ form, onChange }: iField) => {
                 <SelectValue placeholder="Seleccione una etapa" />
               </SelectTrigger>
               <SelectContent>
+                {addEmpty && <SelectItem value="all">[Ninguna]</SelectItem>}
                 {filteredEtapa?.map((item: any) => (
                   <SelectItem key={item.id} value={String(item.id)}>
                     {item.nombre}

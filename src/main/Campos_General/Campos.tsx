@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/select';
 import Cards from '@/components/Cards';
 import ConfirmationDialog from '@/components/confirmationDialog';
+import OptionsTagsInput from '@/components/tags';
 import { Field as FieldFlujo } from '../Flujos/Field';
 import { getNewSchema, newSchemaType } from './NewSchemaType';
 
@@ -51,6 +52,10 @@ export default function CamposGeneral() {
       nombre: '',
       tipo: '',
       flujo: '',
+      label: '',
+      placeholder: '',
+      requerido: false,
+      opciones: '',
     },
   });
   const [items, setItems] = useState<ItemCampo[]>(initialItems);
@@ -81,6 +86,9 @@ export default function CamposGeneral() {
             orden: f.orden,
             requerido: f.requerido,
             tipo: f.tipo,
+            label: f.label,
+            placeHolder: f.placeholder,
+            opciones: f.opciones,
           }));
         setItems(mapped);
       } else {
@@ -89,12 +97,28 @@ export default function CamposGeneral() {
     };
     fetchData();
   }, [alert]);
-  const resetForm = () => {
+  const resetForm = (withoutFlujo = false) => {
+    if (withoutFlujo) {
+      form.reset({
+        nombre: '',
+        flujo: form.getValues('flujo'),
+        tipo: '',
+        requerido: false,
+        label: '',
+        placeholder: '',
+        opciones: '',
+      });
+      form.clearErrors();
+      return;
+    }
     form.reset({
       nombre: '',
       flujo: '',
       tipo: '',
       requerido: false,
+      label: '',
+      placeholder: '',
+      opciones: '',
     });
     form.clearErrors();
   };
@@ -120,6 +144,9 @@ export default function CamposGeneral() {
       flujo: selectedFlujo,
       requerido: item.requerido,
       tipo: item.tipo,
+      label: item.label ?? '',
+      placeholder: item.placeHolder ?? '',
+      opciones: item.opciones ?? '',
     });
     form.clearErrors();
   };
@@ -134,6 +161,9 @@ export default function CamposGeneral() {
           orden: (filteredItems?.length ?? 0) + 1,
           requerido: values.requerido ?? false,
           flujo: values.flujo,
+          label: values.label ?? '',
+          placeHolder: values.placeholder ?? '',
+          opciones: values.opciones ?? '',
         };
         response = await NewCampo(user?.jwt ?? '', itemCampoAdd);
       } else {
@@ -142,6 +172,9 @@ export default function CamposGeneral() {
         itemEditted.tipo = values.tipo;
         itemEditted.flujo = values.flujo;
         itemEditted.requerido = values.requerido ?? false;
+        itemEditted.label = values.label ?? '';
+        itemEditted.placeHolder = values.placeholder ?? '';
+        itemEditted.opciones = values.opciones ?? '';
         response = await EditCampo(user?.jwt ?? '', itemEditted);
       }
       if (response.code == '000') {
@@ -225,6 +258,7 @@ export default function CamposGeneral() {
               <FieldFlujo
                 form={form}
                 onChange={() => {
+                  resetForm(true);
                   setItemToEdit(undefined);
                   setItemToDelete(undefined);
                 }}
@@ -243,11 +277,13 @@ export default function CamposGeneral() {
                       </div>
                       <div className="flex">
                         <Cards
+                          key={String(selectedFlujo ?? '')}
                           items={filteredItems}
                           onReorder={onReorder}
                           loadToEdit={loadToEdit}
                           isOrdered={true}
                           loadToDelete={loadToDelete}
+                          type="campo_general"
                         />
                       </div>
                     </div>
@@ -293,6 +329,44 @@ export default function CamposGeneral() {
                           />
                           <FormField
                             control={form.control}
+                            name="label"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  LABEL DEL CAMPO
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Ingrese el label del campo"
+                                    className="rounded-3xl"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="placeholder"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  PLACEHOLDER DEL CAMPO
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Ingrese el placeholder del campo"
+                                    className="rounded-3xl"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
                             name="tipo"
                             render={({ field }) => (
                               <FormItem>
@@ -303,7 +377,6 @@ export default function CamposGeneral() {
                                   <Select
                                     onValueChange={(val) => {
                                       field.onChange(val);
-                                      setItemToEdit(undefined);
                                     }}
                                     value={field.value}
                                     defaultValue={field.value}
@@ -321,6 +394,12 @@ export default function CamposGeneral() {
                                       <SelectItem value="Fecha">
                                         Fecha
                                       </SelectItem>
+                                      <SelectItem value="Opciones">
+                                        Opciones
+                                      </SelectItem>
+                                      <SelectItem value="Cheque">
+                                        Cheque
+                                      </SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </FormControl>
@@ -328,6 +407,29 @@ export default function CamposGeneral() {
                               </FormItem>
                             )}
                           />
+                          {form.watch('tipo') === 'Opciones' ? (
+                            <FormField
+                              control={form.control}
+                              name="opciones"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="color-dark-blue-marn font-bold">
+                                    Opciones Disponibles
+                                  </FormLabel>
+                                  <FormControl>
+                                    <OptionsTagsInput
+                                      value={field.value}
+                                      onChange={field.onChange}
+                                      placeholder="Añade una opción y presiona Enter"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          ) : (
+                            <></>
+                          )}
                           <FormField
                             control={form.control}
                             name="requerido" // debe ser boolean en tu schema
@@ -340,8 +442,7 @@ export default function CamposGeneral() {
                                   <Checkbox
                                     checked={!!field.value}
                                     onCheckedChange={(checked) => {
-                                      field.onChange(checked === true); // fuerza boolean
-                                      setItemToEdit(undefined);
+                                      field.onChange(checked === true);
                                     }}
                                   />
                                 </FormControl>

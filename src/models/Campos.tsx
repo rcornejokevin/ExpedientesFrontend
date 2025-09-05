@@ -8,6 +8,9 @@ export interface ItemCampo {
   flujo?: string;
   orden?: number;
   requerido: boolean;
+  label: string;
+  placeHolder?: string;
+  opciones?: string;
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'campo/list', jwt);
@@ -21,6 +24,9 @@ const New = async (jwt: string, obj: ItemCampo) => {
     flujoId: Number.parseInt(obj.flujo ?? '0'),
     requerido: obj.requerido,
     tipoCampo: obj.tipo,
+    label: obj.label,
+    placeHolder: obj.placeHolder,
+    opciones: obj.tipo == 'Opciones' ? obj.opciones : '',
   };
   try {
     const response: any = await sendPost(newObj, 'campo/add', true, jwt);
@@ -43,6 +49,9 @@ const Edit = async (jwt: string, item: ItemCampo) => {
     flujoId: Number.parseInt(item.flujo ?? '0'),
     requerido: item.requerido,
     tipoCampo: item.tipo,
+    label: item.label,
+    placeHolder: item.placeHolder,
+    opciones: item.tipo == 'Opciones' ? item.opciones : '',
   };
   try {
     const response: any = await sendPut(newObj, 'campo/edit', true, jwt);
