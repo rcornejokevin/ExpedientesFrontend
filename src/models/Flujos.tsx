@@ -9,6 +9,20 @@ const GetList = async (jwt: string) => {
   const response = await sendGet('', 'flujo/list', jwt);
   return await response;
 };
+const GetItemFlujoList = async (jwt: string): Promise<ItemFlujo[]> => {
+  const response = await GetList(jwt);
+  if (response.code === '000') {
+    const data = response.data;
+    const mapped: ItemFlujo[] = data.map((f: any) => ({
+      id: String(f.id),
+      nombre: f.nombre,
+      ayuda: f.detalle ?? '',
+    }));
+    return mapped;
+  } else {
+    throw new Error(response.message);
+  }
+};
 const New = async (jwt: string, nombre: string, detalle: string) => {
   const newObj = {
     nombre,
@@ -54,4 +68,4 @@ const Delete = async (jwt: string, id: number) => {
     throw error;
   }
 };
-export { GetList, New, Delete, Edit };
+export { GetList, New, Delete, Edit, GetItemFlujoList };

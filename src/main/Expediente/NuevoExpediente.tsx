@@ -6,6 +6,7 @@ import { CampoConValor, ItemExpediente, New } from '@/models/Expediente';
 import { GetList as GetListFlujos } from '@/models/Flujos';
 import { GetList as GetListSubEtapa } from '@/models/SubEtapas';
 import { GetList as GetListUsuario } from '@/models/Usuarios';
+import CaratulaPDF from '@/pdf/CaratulaPDF';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   FileImage,
@@ -44,8 +45,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import DatePickerMarn from '@/components/datePicker';
-import handlePrint from '@/components/pageToPrint';
 import PdfUpload from '@/components/pdf-upload';
+import { printReactPdf } from '@/components/printPdf';
 import { ApiSchemaConfig, getNewSchema } from './NewSchemaType';
 
 interface AddUsuarioI {
@@ -61,7 +62,7 @@ interface ItemSelect {
 }
 export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
   const [loading, setLoading] = useState<boolean>(false);
-  const [print, setPrint] = useState<boolean>(true);
+  const [onPrint, setOnPrint] = useState<boolean>(false);
   const { user } = useAuth();
   const { setAlert } = useFlash();
   const [schemaCfg, setSchemaCfg] = useState<ApiSchemaConfig | null>();
@@ -228,12 +229,11 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
       };
       response = await New(user?.jwt ?? '', newExpediente);
       if (response.code == '000') {
-        setOpen(false);
+        setOnPrint(true);
         setAlert({
           type: 'success',
           message: 'Expediente creado correctamente.',
         });
-        resetForm();
       } else {
         setAlert({ type: 'error', message: response.message });
       }
@@ -607,12 +607,34 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                       formatStr="d 'de' MMMM 'de' yyyy"
                     />
                     <div className="flex justify-end">
-                      {print ? (
+                      {onPrint ? (
                         <Button
                           className="rounded-3xl mr-3"
                           type="button"
                           style={{ backgroundColor: 'white' }}
-                          onClick={handlePrint}
+                          onClick={async () => {
+                            const vals = form.getValues();
+                            const doc = (
+                              <CaratulaPDF
+                                codigo={vals['CODIGO'] || ''}
+                                nombreExpediente={
+                                  vals['NOMBRE DE EXPEDIENTE'] || ''
+                                }
+                                fechaIngreso={vals['FECHA DE INGRESO'] || ''}
+                                tipoProceso={
+                                  flujo
+                                    ?.filter(
+                                      (item) =>
+                                        item.value == vals['TIPO DE PROCESO'],
+                                    )
+                                    .map((item) => item.nombre)
+                                    .at(0) || ''
+                                }
+                                logoSrc={'/logos/marn_azul.png'}
+                              />
+                            );
+                            await printReactPdf(doc);
+                          }}
                         >
                           <Text className="text-[#192854] font-bold text-md">
                             {loading ? (
