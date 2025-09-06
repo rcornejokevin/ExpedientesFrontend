@@ -2,10 +2,19 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { GetList, ItemExpediente } from '@/models/Expediente';
 import { GetItemFlujoList } from '@/models/Flujos';
-import { Filter, FolderOpen, Plus, Search, TableIcon } from 'lucide-react';
+import {
+  Filter,
+  FolderOpen,
+  Plus,
+  Search,
+  SquareSquare,
+  TableIcon,
+} from 'lucide-react';
 import Alerts, { useFlash } from '@/lib/alerts';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import Cards from './Dashboard/Cards';
+import Table from './Dashboard/Table';
 import NuevoExpediente from './Expediente/NuevoExpediente';
 
 const Dashboard = () => {
@@ -15,6 +24,7 @@ const Dashboard = () => {
   const [flujo, setFlujo] = useState<any[]>([]);
   const { user } = useAuth();
   const { setAlert } = useFlash();
+  const [mosaicos, setMosaicos] = useState(true);
   useEffect(() => {
     const fetchData = async () => {
       const response = await GetList(user?.jwt ?? '');
@@ -25,6 +35,7 @@ const Dashboard = () => {
           tipo: item.etapaId,
           estatus: item.estatus,
           fechaActualizacion: item.fechaActualizacion,
+          fechaIngreso: item.fechaIngreso,
         }));
         setExpedientes(data);
       } else {
@@ -61,10 +72,31 @@ const Dashboard = () => {
               <div className="flex">
                 <div className="hidden items-center gap-6 md:flex">
                   <div className="flex items-center gap-2">
-                    <TableIcon className="h-4 w-4 text-[#D7ED1E]" />
-                    <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70">
-                      Tabla
-                    </span>
+                    {mosaicos ? (
+                      <button
+                        className="flex"
+                        onClick={() => {
+                          setMosaicos(!mosaicos);
+                        }}
+                      >
+                        <TableIcon className="h-4 w-4 text-[#D7ED1E]" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70">
+                          Tabla
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        className="flex"
+                        onClick={() => {
+                          setMosaicos(!mosaicos);
+                        }}
+                      >
+                        <SquareSquare className="h-4 w-4 text-[#D7ED1E]" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70">
+                          Mosaicos
+                        </span>
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-[#D7ED1E]" />
@@ -97,70 +129,11 @@ const Dashboard = () => {
               </button>
             </div>
             <div className="mt-6 px-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {expedientes.map((e, idx) => (
-                  <div
-                    key={`${e.codigo}-${idx}`}
-                    className="rounded-xl bg-white shadow-sm border border-gray-200 p-4 hover:shadow-md transition"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70 bg-gray-100 rounded-3xl px-2 py-1">
-                        {e.codigo}
-                      </span>
-                    </div>
-                    <div className="mt-2 text-[#1E2851] font-extrabold leading-snug">
-                      {e.nombre?.length > 56
-                        ? e.nombre.slice(0, 56) + '…'
-                        : e.nombre}
-                    </div>
-
-                    <div className="mt-3 space-y-1.5 text-[12px]">
-                      <div>
-                        <span className="text-[#2DA6DC] uppercase">
-                          FECHA DE ÚLTIMA ETAPA:{' '}
-                        </span>
-                        <span className="text-[#1E2851]/80 font-semibold">
-                          {e.fechaActualizacion
-                            ? new Date(
-                                e.fechaActualizacion,
-                              ).toLocaleDateString()
-                            : '-'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[#2DA6DC] uppercase">
-                          TIPO DE PROCESO:{' '}
-                        </span>
-                        <span className="text-[#1E2851]/80 font-semibold">
-                          {String(
-                            flujo
-                              .filter((item) => item.id == e.tipo)
-                              .map((item) => item.nombre)
-                              .at(0),
-                          ) ?? '-'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[#2DA6DC] uppercase">
-                          ESTATUS:{' '}
-                        </span>
-                        <span className="text-[#1E2851]/80 font-semibold">
-                          {e.estatus ?? '-'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-3">
-                      <button
-                        type="button"
-                        className="text-[#2DA6DC] font-extrabold text-[12px] uppercase hover:underline"
-                      >
-                        ABRIR EXPEDIENTE
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {mosaicos ? (
+                <Cards expedientes={expedientes} flujo={flujo} />
+              ) : (
+                <Table expedientes={expedientes} flujo={flujo} />
+              )}
             </div>
           </div>
           <div className="basis-1/5">

@@ -283,7 +283,7 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
             <div className="flex items-center">
               <SquarePenIcon
                 size={40}
-                className="mr-5 font-bold color-blue-marn"
+                className="mr-5 font-bold color-dark-blue-marn-bg"
               />
               <Text className="text-xl font-bold color-dark-blue-marn">
                 Ingreso de Expedientes
