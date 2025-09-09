@@ -428,7 +428,8 @@ export default function EditExpediente({
                       </Label>
                     </div>
                     <div className="flex">
-                      {expediente.minatura != '' && (
+                      {expediente.minatura != '' &&
+                      expediente.miniatura != null ? (
                         <div className="basis-1/2 flex items-center justify-center">
                           <img
                             onClick={() => {
@@ -438,10 +439,15 @@ export default function EditExpediente({
                             src={`data:image/png;base64,${expediente.miniatura}`}
                           />
                         </div>
+                      ) : (
+                        <></>
                       )}
                       <div
                         className={
-                          expediente.miniatura != '' ? 'basis-1/2 ' : ''
+                          expediente.miniatura != '' &&
+                          expediente.miniatura != null
+                            ? 'basis-1/2 '
+                            : ''
                         }
                       >
                         <PdfUpload
