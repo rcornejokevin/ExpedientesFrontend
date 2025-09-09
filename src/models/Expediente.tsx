@@ -24,11 +24,15 @@ export interface CampoConValor {
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'cases/list', jwt);
-  return await response;
+  return response;
+};
+const GetListDetails = async (jwt: string, id: number) => {
+  const response = await sendGet('', `cases/detail/${id}`, jwt);
+  return response;
 };
 const GetItem = async (jwt: string, id: number) => {
   const response = await sendGet('', `cases/${id}`, jwt);
-  return await response;
+  return response;
 };
 const GetItemExpedienteList = async (
   jwt: string,
@@ -123,4 +127,5 @@ export {
   GetItemExpediente,
   Edit,
   GetFile,
+  GetListDetails,
 };

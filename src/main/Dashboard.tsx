@@ -9,6 +9,7 @@ import {
   SquareSquare,
   TableIcon,
 } from 'lucide-react';
+import { useLoadingBar } from 'react-top-loading-bar';
 import Alerts, { useFlash } from '@/lib/alerts';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
