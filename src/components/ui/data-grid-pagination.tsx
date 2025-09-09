@@ -29,7 +29,7 @@ function DataGridPagination(props: DataGridPaginationProps) {
 
   const defaultProps: Partial<DataGridPaginationProps> = {
     sizes: [5, 10, 25, 50, 100],
-    sizesLabel: 'Show',
+    sizesLabel: 'Rows per page',
     sizesDescription: 'per page',
     sizesSkeleton: <Skeleton className="h-8 w-44" />,
     moreLimit: 5,
@@ -139,7 +139,7 @@ function DataGridPagination(props: DataGridPaginationProps) {
           mergedProps?.sizesSkeleton
         ) : (
           <>
-            <div className="text-sm text-muted-foreground">Rows per page</div>
+            <div className="text-sm text-muted-foreground">{mergedProps?.sizesLabel}</div>
             <Select
               value={`${pageSize}`}
               indicatorPosition="right"

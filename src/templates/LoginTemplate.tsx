@@ -35,10 +35,11 @@ const LoginTemplate = () => {
       <div className="flex grow flex-col in-data-[sticky-header=on]:pt-(--header-height-default)">
         <Header isMenuShowed={false} />
         <div className="flex grow" role="content">
-          <div className="flex flex-col items-center justify-center grow h-full top-0 left-0 w-full bg-gradient-to-b from-[#FFFFFF] to-[#E2E8EB] z-0">
+          <div className="relative overflow-hidden flex flex-col items-center justify-center grow w-full bg-gradient-to-b from-[#FFFFFF] to-[#E2E8EB]">
             <img
               src="/media/images/marn_volcanes.png"
-              className="absolute bottom-0 w-full object-cover z-10"
+              alt="Fondo volcanes MARN"
+              className="pointer-events-none absolute bottom-0 inset-x-0 w-full object-cover z-[1]"
             />
             <Card className="w-full max-w-[400px] relative z-20">
               <CardContent className="p-6">

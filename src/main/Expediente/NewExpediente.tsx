@@ -52,7 +52,6 @@ import { ApiSchemaConfig, getNewSchema } from './NewSchemaType';
 interface AddUsuarioI {
   open: boolean;
   setOpen: any;
-  edit: boolean;
 }
 interface ItemSelect {
   nombre: string;
@@ -60,7 +59,7 @@ interface ItemSelect {
   padre?: string;
   orden?: number;
 }
-export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
+export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
   const [loading, setLoading] = useState<boolean>(false);
   const [onPrint, setOnPrint] = useState<boolean>(false);
   const { user } = useAuth();
@@ -73,6 +72,7 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
   const [subEtapa, setSubEtapa] = useState<ItemSelect[]>();
   const [asesor, setAsesor] = useState<ItemSelect[]>();
   useEffect(() => {
+    setOnPrint(false);
     const fetchData = async () => {
       const response = await GetListCampo(user?.jwt ?? '');
       if (response.code === '000') {
@@ -550,7 +550,7 @@ export default function NuevoExpediente({ open, setOpen, edit }: AddUsuarioI) {
                       form={form}
                       name={'PDF_EXPEDIENTE'}
                       label={''}
-                      height={260}
+                      height={200}
                     />
                     <div className="flex items-center gap-2 mb-4 ">
                       <Network color="#2DA6DC" className="size-7" />

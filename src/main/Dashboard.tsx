@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { GetList, ItemExpediente } from '@/models/Expediente';
-import { GetItemFlujoList } from '@/models/Flujos';
+import { GetList } from '@/models/Expediente';
 import {
   Filter,
   FolderOpen,
@@ -15,13 +14,14 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import Cards from './Dashboard/Cards';
 import Table from './Dashboard/Table';
-import NuevoExpediente from './Expediente/NuevoExpediente';
+import EditExpediente from './Expediente/EditExpediente';
+import NewExpediente from './Expediente/NewExpediente';
 
 const Dashboard = () => {
   const [open, setOpen] = useState<boolean>(false);
-  const [isEdit, setIsEdit] = useState<boolean>(false);
+  const [openEdited, setOpenEdited] = useState<boolean>(false);
+  const [expedienteSelected, setExpedienteSelected] = useState<any>();
   const [expedientes, setExpedientes] = useState<any[]>([]);
-  const [flujo, setFlujo] = useState<any[]>([]);
   const { user } = useAuth();
   const { setAlert } = useFlash();
   const [mosaicos, setMosaicos] = useState(true);
@@ -36,27 +36,36 @@ const Dashboard = () => {
           estatus: item.estatus,
           fechaActualizacion: item.fechaActualizacion,
           fechaIngreso: item.fechaIngreso,
+          id: item.id,
+          flujoId: item.flujoId,
+          flujo: item.flujo,
+          etapa: item.etapa,
         }));
         setExpedientes(data);
       } else {
         setAlert({ type: 'error', message: response.message });
       }
     };
-    const flujo = async () => {
-      const data = await GetItemFlujoList(user?.jwt ?? '');
-      setFlujo(data);
-    };
     fetchData();
-    flujo();
-  }, [open]);
-
+  }, [open, openEdited]);
+  const setEditedExpediente = (editedElement: string) => {
+    setExpedienteSelected(editedElement);
+    setOpenEdited(true);
+  };
   return (
     <>
-      <NuevoExpediente open={open} setOpen={setOpen} edit={isEdit} />
+      <NewExpediente open={open} setOpen={setOpen} />
+      {expedienteSelected && (
+        <EditExpediente
+          open={openEdited}
+          setOpen={setOpenEdited}
+          idExpediente={expedienteSelected}
+        />
+      )}
 
-      <div className="mx-5 mt-5">
+      <div className="mx-5 mt-5 min-h-screen flex flex-col">
         <Alerts />
-        <div className="flex gap-4">
+        <div className="flex-1 min-h-0 flex gap-4">
           <div className="basis-4/5">
             <div className="flex items-center justify-between">
               <div className="flex">
@@ -128,11 +137,21 @@ const Dashboard = () => {
                 Crear nuevo expediente
               </button>
             </div>
-            <div className="mt-6 px-4">
+            <div className="mt-6 px-4 flex-1 min-h-0 flex flex-col">
               {mosaicos ? (
-                <Cards expedientes={expedientes} flujo={flujo} />
+                <div className="flex-1 min-h-0">
+                  <Cards
+                    expedientes={expedientes}
+                    setEditedExpediente={setEditedExpediente}
+                  />
+                </div>
               ) : (
-                <Table expedientes={expedientes} flujo={flujo} />
+                <div className="flex-1 min-h-0">
+                  <Table
+                    expedientes={expedientes}
+                    setEditedExpediente={setEditedExpediente}
+                  />
+                </div>
               )}
             </div>
           </div>

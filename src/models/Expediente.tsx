@@ -1,4 +1,4 @@
-import { sendGet, sendPost } from '@/lib/apiRequest';
+import { sendGet, sendPost, sendPut } from '@/lib/apiRequest';
 
 export interface ItemExpediente {
   id?: string;
@@ -25,6 +25,37 @@ export interface CampoConValor {
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'cases/list', jwt);
   return await response;
+};
+const GetItem = async (jwt: string, id: number) => {
+  const response = await sendGet('', `cases/${id}`, jwt);
+  return await response;
+};
+const GetItemExpedienteList = async (
+  jwt: string,
+): Promise<ItemExpediente[]> => {
+  const response = await GetList(jwt);
+  if (response.code === '000') {
+    const data = response.data;
+    const mapped: ItemExpediente[] = data.map((f: any) => ({
+      id: String(f.id),
+      nombre: f.nombre,
+      ayuda: f.detalle ?? '',
+    }));
+    return mapped;
+  } else {
+    throw new Error(response.message);
+  }
+};
+const GetItemExpediente = async (
+  jwt: string,
+  id: number,
+): Promise<ItemExpediente[]> => {
+  const response = await GetItem(jwt, id);
+  if (response.code === '000') {
+    return response.data;
+  } else {
+    throw new Error(response.message);
+  }
 };
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -62,4 +93,34 @@ const New = async (jwt: string, obj: ItemExpediente) => {
     throw error;
   }
 };
-export { GetList, New };
+const Edit = async (jwt: string, obj: any) => {
+  try {
+    const objToSend = {
+      ...obj,
+      archivo: obj.archivo ? await fileToBase64(obj.archivo) : '',
+      nombreArchivo: obj.archivo ? obj.archivo.name : '',
+    };
+    const response: any = await sendPut(objToSend, 'cases/edit', true, jwt);
+    if (response.code === '400') {
+      const errorsString = Object.entries(response.data)
+        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
+        .join(' | ');
+      response.message += `: ${errorsString}`;
+    }
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+const GetFile = async (jwt: string, id: number) => {
+  const response = await sendGet('', `cases/document/${id}`, jwt);
+  return await response;
+};
+export {
+  GetList,
+  New,
+  GetItemExpedienteList,
+  GetItemExpediente,
+  Edit,
+  GetFile,
+};

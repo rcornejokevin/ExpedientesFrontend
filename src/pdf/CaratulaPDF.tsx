@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 2,
-    fontWeight: 800,
+    fontWeight: 1000,
   },
   block: {
     backgroundColor: '#E1E4E7',
@@ -106,10 +106,12 @@ export default function CaratulaPDF({
         </View>
 
         <View style={styles.inlineRow}>
-          <Text style={[styles.label, { marginBottom: 0, marginRight: 8 }]}> 
+          <Text style={[styles.label, { marginBottom: 0, marginRight: 8 }]}>
             IDENTIFICADOR DEL EXPEDIENTE:
           </Text>
-          <Text style={[styles.badge, { alignSelf: 'center' }]}>{codigo}</Text>
+          <Text style={[styles.badge, styles.big, { alignSelf: 'center' }]}>
+            {codigo}
+          </Text>
         </View>
 
         <Text style={[styles.label, { marginTop: 12 }]}>

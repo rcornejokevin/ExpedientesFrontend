@@ -42,14 +42,15 @@ const GeneralTemplate = () => {
       <Helmet>
         <title>{item?.title}</title>
       </Helmet>
-      <div className="flex grow flex-col in-data-[sticky-header=on]:pt-(--header-height-default)">
+      <div className="grow min-h-screen flex flex-col in-data-[sticky-header=on]:pt-(--header-height-default)">
         <Header isMenuShowed={true} />
 
-        <div className="grow" role="content">
-          <div className="h-full top-0 left-0 w-full bg-gradient-to-b from-[#FFFFFF] to-[#E2E8EB] z-0">
+        <div className="flex-1 min-h-0" role="content">
+          <div className="relative overflow-hidden w-full h-full bg-gradient-to-b from-[#FFFFFF] to-[#E2E8EB]">
             <img
               src="/media/images/marn_volcanes.png"
-              className="absolute bottom-0 w-full object-cover z-10"
+              alt="Fondo volcanes MARN"
+              className="pointer-events-none absolute bottom-0 inset-x-0 w-full object-cover z-[1]"
             />
             <div className="relative z-20">
               <Outlet />
