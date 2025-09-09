@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 export const getEditSchema = () => {
   return z.object({
-    etapa: z.string().min(1, { message: 'La etapa del campo es requerido' }),
+    etapa: z.string().min(1, { message: 'La etapa es requerida' }),
+    asesor: z.string().min(1, { message: 'El asesor es requerido' }),
     subEtapa: z.string(),
     aniadirArchivo: z.boolean().optional(),
     PDF_EXPEDIENTE: z

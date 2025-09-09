@@ -35,6 +35,7 @@ import { editSchemaType, getEditSchema } from './EditSchemaType';
 interface iEditExpedienteForm {
   etapa: any[] | undefined;
   subEtapa: any[] | undefined;
+  asesor: any[] | undefined;
   expediente: any;
   setAlert: any;
   setOpen: any;
@@ -43,6 +44,7 @@ interface iEditExpedienteForm {
 const EditExpedienteForm = ({
   etapa,
   subEtapa,
+  asesor,
   expediente,
   setAlert,
   setOpen,
@@ -58,6 +60,7 @@ const EditExpedienteForm = ({
         expediente.etapaDetalleId != null
           ? String(expediente.etapaDetalleId)
           : '',
+      asesor: expediente.asesorId != null ? String(expediente.asesorId) : '',
     },
   });
   const formatStr = "d 'de' MMMM 'de' yyyy";
@@ -141,7 +144,6 @@ const EditExpedienteForm = ({
     try {
       const response = await GetFile(user?.jwt ?? '', id);
       if (response.code == '000') {
-        debugger;
         const data = response.data;
         const link = document.createElement('a');
         link.href = `data:application/pdf;base64,${data.archivo}`;
@@ -416,6 +418,50 @@ const EditExpedienteForm = ({
                                 key={item.value}
                                 value={String(item.value)}
                                 disabled={item.disabled}
+                              >
+                                {item.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          className="rounded-3xl"
+                          placeholder="[SIN SUB-ETAPA]"
+                          {...field}
+                          readOnly={true}
+                        />
+                      )}
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={'asesor'}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="color-dark-blue-marn font-bold">
+                      ASESOR ACTUAL
+                    </FormLabel>
+                    <FormControl>
+                      {(subEtapaFiltered?.length ?? 0 > 0) ? (
+                        <Select
+                          name={'asesor'}
+                          onValueChange={(val) => {
+                            field.onChange(val);
+                          }}
+                          value={field.value}
+                        >
+                          <SelectTrigger className="rounded-3xl">
+                            <SelectValue placeholder="Seleccione un asesor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {asesor?.map((item) => (
+                              <SelectItem
+                                key={item.value}
+                                value={String(item.value)}
                               >
                                 {item.nombre}
                               </SelectItem>

@@ -189,6 +189,7 @@ export default function EditExpediente({
               setAlert={setAlert}
               setOpen={setOpen}
               extraFields={extraFields}
+              asesor={asesor}
             />
           ) : (
             <EditExpedienteDetail

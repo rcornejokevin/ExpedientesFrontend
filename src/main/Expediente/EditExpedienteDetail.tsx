@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { GetListDetails } from '@/models/Expediente';
+import { GetFile, GetListDetails } from '@/models/Expediente';
 import { Check, X } from 'lucide-react';
 import { useLoading } from '@/providers/loading-provider';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,27 @@ const EditExpedienteDetail = ({
 }: iEditExpedienteDetail) => {
   const [details, setDetails] = useState([]);
   const { setLoading } = useLoading();
+  const downloadFile = async (id: number) => {
+    setLoading(true);
+    try {
+      const response = await GetFile(user?.jwt ?? '', id);
+      if (response.code == '000') {
+        const data = response.data;
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${data.archivo}`;
+        link.download = data.nombreArchivo;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    } catch (error) {
+      setAlert({ type: 'error', message: error });
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -98,6 +119,9 @@ const EditExpedienteDetail = ({
                   <div className="basis-1/2 flex items-center justify-center">
                     <img
                       alt={expediente.nombreArchivo}
+                      onClick={() => {
+                        downloadFile(Number.parseInt(expediente.id));
+                      }}
                       style={{ height: 200, cursor: 'pointer' }}
                       src={`data:image/png;base64,${expediente.miniatura}`}
                     />
