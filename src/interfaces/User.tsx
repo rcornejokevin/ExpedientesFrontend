@@ -3,4 +3,5 @@ export default interface User {
   role: string;
   jwt: string;
   name?: string;
+  perfil?: string;
 }

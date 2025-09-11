@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { Edit, GetFile } from '@/models/Expediente';
+import { ChangeStatus, Edit, GetFile } from '@/models/Expediente';
 import CaratulaPDF from '@/pdf/CaratulaPDF';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -8,6 +8,7 @@ import { es } from 'date-fns/locale';
 import { FileImage, LoaderCircleIcon, Network, Printer } from 'lucide-react';
 import { Text } from 'react-aria-components';
 import { useForm } from 'react-hook-form';
+import { useLoading } from '@/providers/loading-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -52,6 +53,7 @@ const EditExpedienteForm = ({
 }: iEditExpedienteForm) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
+  const { setLoading: setLoadingComplete } = useLoading();
   const form = useForm<editSchemaType>({
     resolver: zodResolver(getEditSchema()),
     defaultValues: {
@@ -116,6 +118,7 @@ const EditExpedienteForm = ({
       subEtapaId: values.subEtapa,
       adjuntarArchivo: values.aniadirArchivo,
       archivo: values.PDF_EXPEDIENTE,
+      asesor: values.asesor,
     };
     setLoading(true);
     try {
@@ -160,10 +163,40 @@ const EditExpedienteForm = ({
       setLoading(false);
     }
   };
+  const estatusExpediente = async (estatus: string) => {
+    const response = await ChangeStatus(
+      user?.jwt ?? '',
+      expediente.id,
+      estatus,
+    );
+    if (response.code === '000') {
+      setAlert({
+        type: 'success',
+        message: `Expediente ${estatus} correctamente.`,
+      });
+      setOpen(false);
+    } else {
+      setAlert({ type: 'error', message: response.message });
+    }
+  };
+  useEffect(() => {
+    setLoading(true);
+    setLoadingComplete(true);
+    form.reset({
+      etapa: expediente.etapaId != null ? String(expediente.etapaId) : '',
+      subEtapa:
+        expediente.etapaDetalleId != null
+          ? String(expediente.etapaDetalleId)
+          : '',
+      asesor: expediente.asesorId != null ? String(expediente.asesorId) : '',
+    });
+    setLoadingComplete(false);
+    setLoading(false);
+  }, [expediente]);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        {' '}
         <div
           style={{
             backgroundColor: 'white',
@@ -192,6 +225,34 @@ const EditExpedienteForm = ({
                 <FormControl>
                   <Input
                     value={expediente.nombre}
+                    className="rounded-3xl"
+                    placeholder="Nombre del expediente..."
+                    readOnly={true}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+              <FormItem>
+                <FormLabel className="color-dark-blue-marn font-bold">
+                  ASUNTO
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    value={expediente.asunto}
+                    className="rounded-3xl"
+                    placeholder="Nombre del expediente..."
+                    readOnly={true}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+              <FormItem>
+                <FormLabel className="color-dark-blue-marn font-bold">
+                  REMITENTE
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    value={expediente.remitente}
                     className="rounded-3xl"
                     placeholder="Nombre del expediente..."
                     readOnly={true}
@@ -278,6 +339,52 @@ const EditExpedienteForm = ({
                   <FormMessage />
                 </FormItem>
               ))}
+              <div className="flex justify-start">
+                {expediente.puedeCerrarse &&
+                  expediente.estatus == 'Abierto' && (
+                    <Button
+                      className="rounded-3xl mr-3"
+                      type="button"
+                      style={{ backgroundColor: '#D9EC6C' }}
+                      onClick={() => {
+                        estatusExpediente('Cerrado');
+                      }}
+                    >
+                      <Text className="text-[#192854] font-bold text-md">
+                        {loading ? (
+                          <span className="flex items-center gap-2">
+                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                            Cargando...
+                          </span>
+                        ) : (
+                          'CERRAR EXPEDIENTE'
+                        )}
+                      </Text>
+                    </Button>
+                  )}
+                {expediente.estatus == 'Cerrado' &&
+                  user?.perfil == 'Administrador' && (
+                    <Button
+                      className="rounded-3xl"
+                      type="button"
+                      style={{ backgroundColor: '#D9EC6C' }}
+                      onClick={() => {
+                        estatusExpediente('Archivado');
+                      }}
+                    >
+                      <Text className="text-[#192854] font-bold text-md">
+                        {loading ? (
+                          <span className="flex items-center gap-2">
+                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                            Cargando...
+                          </span>
+                        ) : (
+                          'ARCHIVAR EXPEDIENTE'
+                        )}
+                      </Text>
+                    </Button>
+                  )}
+              </div>
             </div>
             <div className="basis-1/2 mx-5 space-y-5">
               <div className="flex items-center gap-2 mb-4 ">
@@ -308,12 +415,14 @@ const EditExpedienteForm = ({
                       : ''
                   }
                 >
-                  <PdfUpload
-                    form={form}
-                    name={'PDF_EXPEDIENTE'}
-                    label={''}
-                    height={200}
-                  />
+                  {expediente.estatus == 'Abierto' && (
+                    <PdfUpload
+                      form={form}
+                      name={'PDF_EXPEDIENTE'}
+                      label={''}
+                      height={200}
+                    />
+                  )}
                 </div>
               </div>
               {form.watch('PDF_EXPEDIENTE') != null && (
@@ -354,6 +463,7 @@ const EditExpedienteForm = ({
                     </FormLabel>
                     <FormControl>
                       <Select
+                        disabled={expediente.estatus != 'Abierto'}
                         name={'etapa'}
                         onValueChange={(val) => {
                           field.onChange(val);
@@ -403,6 +513,7 @@ const EditExpedienteForm = ({
                     <FormControl>
                       {(subEtapaFiltered?.length ?? 0 > 0) ? (
                         <Select
+                          disabled={expediente.estatus != 'Abierto'}
                           name={'subEtapa'}
                           onValueChange={(val) => {
                             field.onChange(val);
@@ -446,36 +557,28 @@ const EditExpedienteForm = ({
                       ASESOR ACTUAL
                     </FormLabel>
                     <FormControl>
-                      {(subEtapaFiltered?.length ?? 0 > 0) ? (
-                        <Select
-                          name={'asesor'}
-                          onValueChange={(val) => {
-                            field.onChange(val);
-                          }}
-                          value={field.value}
-                        >
-                          <SelectTrigger className="rounded-3xl">
-                            <SelectValue placeholder="Seleccione un asesor" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {asesor?.map((item) => (
-                              <SelectItem
-                                key={item.value}
-                                value={String(item.value)}
-                              >
-                                {item.nombre}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          className="rounded-3xl"
-                          placeholder="[SIN SUB-ETAPA]"
-                          {...field}
-                          readOnly={true}
-                        />
-                      )}
+                      <Select
+                        name={'asesor'}
+                        disabled={expediente.estatus != 'Abierto'}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                        }}
+                        value={field.value}
+                      >
+                        <SelectTrigger className="rounded-3xl">
+                          <SelectValue placeholder="Seleccione un asesor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {asesor?.map((item) => (
+                            <SelectItem
+                              key={item.value}
+                              value={String(item.value)}
+                            >
+                              {item.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -61,13 +61,13 @@ const Login = () => {
       const user: User = {
         email: values.usuario,
         role: bodyResponse.data.role,
-        jwt: bodyResponse.data.token, // Assuming the token is in bodyResponse.data.token
+        jwt: bodyResponse.data.token,
+        perfil: bodyResponse.data.perfil,
       };
       setAlert(null);
       login({ user });
       navigate('/dashboard', { replace: true });
     } catch (error) {
-      console.error('Login failed:', error);
       setAlert({ type: 'error', message: 'Error de autenticación ' + error });
     }
     setLoading(false);

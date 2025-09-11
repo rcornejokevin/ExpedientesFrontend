@@ -4,6 +4,8 @@ import Campos from '@/main/Campos/Campos';
 import Dashboard from '@/main/Dashboard';
 import Etapas from '@/main/Etapas/Etapas';
 import Flujos from '@/main/Flujos/Flujos';
+import Remitentes from '@/main/Remitente/Remitentes';
+import Reporte from '@/main/Reporte/Reporte';
 import SubEtapas from '@/main/SubEtapas/SubEtapas';
 import Usuarios from '@/main/Usuario/Usuarios';
 import { GeneralTemplate } from '@/templates/GeneralTemplate';
@@ -29,6 +31,8 @@ export function AppRouting() {
               <Route path="/campos" index element={<CamposGeneral />} />
             )}
             <Route path="/usuarios" index element={<Usuarios />} />
+            <Route path="/remitentes" index element={<Remitentes />} />
+            <Route path="/reportes" index element={<Reporte />} />
             <Route path="/*" index element={<Dashboard />} />
           </Route>
         </Route>

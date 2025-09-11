@@ -9,6 +9,7 @@ export const getNewSchema = () => {
     ayuda: z
       .string()
       .min(1, { message: 'El texto de ayuda de la etapa es requerido' }),
+    finDeFlujo: z.boolean().optional(),
   });
 };
 

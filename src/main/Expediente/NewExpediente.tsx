@@ -4,6 +4,7 @@ import { GetList as GetListCampo } from '@/models/Campos';
 import { GetList as GetListEtapas } from '@/models/Etapas';
 import { CampoConValor, ItemExpediente, New } from '@/models/Expediente';
 import { GetList as GetListFlujos } from '@/models/Flujos';
+import { GetList as GetListRemitente } from '@/models/Remitentes';
 import { GetList as GetListSubEtapa } from '@/models/SubEtapas';
 import { GetList as GetListUsuario } from '@/models/Usuarios';
 import CaratulaPDF from '@/pdf/CaratulaPDF';
@@ -71,6 +72,7 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
   const [etapa, setEtapa] = useState<ItemSelect[]>();
   const [subEtapa, setSubEtapa] = useState<ItemSelect[]>();
   const [asesor, setAsesor] = useState<ItemSelect[]>();
+  const [remitente, setRemitente] = useState<ItemSelect[]>();
   useEffect(() => {
     setOnPrint(false);
     const fetchData = async () => {
@@ -155,9 +157,23 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
         setAlert({ type: 'error', message: response.message });
       }
     };
+    const fetchDataRemitente = async () => {
+      const response = await GetListRemitente(user?.jwt ?? '');
+      if (response.code === '000') {
+        const data = response.data;
+        const mapped: any = data.map((f: any) => ({
+          value: String(f.id),
+          nombre: f.descripcion,
+        }));
+        setRemitente(mapped);
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    };
     fetchData();
     fetchDataFlujo();
     fetchDataUsuario();
+    fetchDataRemitente();
     fetchDataSubEtapa();
     fetchDataEtapa();
   }, [open]);
@@ -182,13 +198,15 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
     const pad = (n: number) => n.toString().padStart(2, '0');
     const def: Record<string, any> = {};
     for (const f of schemaCfg.fields) {
-      def[f.nombre] = '';
+      def[f.nombre] = f.tipo == 'Cheque' ? false : '';
     }
     def['ASESOR ASIGNADO'] = '';
     def['FECHA DE INGRESO'] = '';
     def['NOMBRE DE EXPEDIENTE'] = '';
     def['TIPO DE PROCESO'] = '';
     def['ESTATUS ACTUAL'] = '';
+    def['ASUNTO'] = '';
+    def['REMITENTE'] = '';
     def['SUB-ETAPA ACTUAL'] = '';
     def['CODIGO'] =
       `#${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
@@ -212,7 +230,12 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
       filteredSchemaCfg?.fields.map((item) => ({
         label: item.label,
         tipoCampo: item.tipo,
-        valor: values[item.nombre],
+        valor:
+          item.tipo == 'Cheque'
+            ? values[item.nombre]
+              ? 'Si'
+              : 'No'
+            : values[item.nombre],
       }));
     try {
       let response: any = null;
@@ -223,6 +246,8 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
         'SUB-ETAPA ACTUAL': values['SUB-ETAPA ACTUAL'],
         'FECHA DE INGRESO': values['FECHA DE INGRESO'],
         'ASESOR ASIGNADO': values['ASESOR ASIGNADO'],
+        REMITENTE: values['REMITENTE'],
+        ASUNTO: values['ASUNTO'],
         'FECHA DE ÚLTIMA ETAPA': values['FECHA DE ÚLTIMA ETAPA'],
         PDF_EXPEDIENTE: values['PDF_EXPEDIENTE'],
         camposAdicionales: camposAdicionales,
@@ -361,6 +386,61 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
                               placeholder="Nombre del expediente..."
                               {...field}
                             />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={'ASUNTO'}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="color-dark-blue-marn font-bold">
+                            ASUNTO DE EXPEDIENTE
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              className="rounded-3xl"
+                              placeholder="Asunto del expediente..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={'REMITENTE'}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="color-dark-blue-marn font-bold">
+                            REMITENTE
+                          </FormLabel>
+                          <FormControl>
+                            <Select
+                              name={'REMITENTE'}
+                              onValueChange={(val) => {
+                                field.onChange(val);
+                              }}
+                              value={field.value}
+                              defaultValue={field.value}
+                            >
+                              <SelectTrigger className="rounded-3xl">
+                                <SelectValue placeholder="Seleccione un Remitente" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {remitente?.map((item) => (
+                                  <SelectItem
+                                    key={item.value}
+                                    value={String(item.value)}
+                                  >
+                                    {item.nombre}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

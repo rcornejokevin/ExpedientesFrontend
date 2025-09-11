@@ -11,6 +11,8 @@ export interface ItemExpediente {
   'ASESOR ASIGNADO'?: string;
   'SUB-ETAPA ACTUAL'?: string;
   camposAdicionales?: Record<string, any>;
+  REMITENTE: string;
+  ASUNTO: string;
   PDF_EXPEDIENTE?: any;
 }
 export interface ListaOrden {
@@ -71,16 +73,14 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 const New = async (jwt: string, obj: ItemExpediente) => {
   const newObj = {
-    etapaId: Number(obj['TIPO DE PROCESO']),
-    subEtapaId:
-      obj['SUB-ETAPA ACTUAL'] == '[SIN PRIMERA SUB-ETAPA]'
-        ? 0
-        : Number(obj['SUB-ETAPA ACTUAL']),
+    flujoId: Number(obj['TIPO DE PROCESO']),
     codigo: obj['CODIGO'],
     nombre: obj['NOMBRE DE EXPEDIENTE'],
     nombreArchivo: obj.PDF_EXPEDIENTE ? obj.PDF_EXPEDIENTE.name : '',
     fechaIngreso: obj['FECHA DE INGRESO'],
     asesor: obj['ASESOR ASIGNADO'],
+    remitenteId: Number.parseInt(obj['REMITENTE']),
+    asunto: obj['ASUNTO'],
     archivo: obj.PDF_EXPEDIENTE ? await fileToBase64(obj.PDF_EXPEDIENTE) : '',
     campos: JSON.stringify(obj.camposAdicionales) || '',
   };
@@ -97,6 +97,13 @@ const New = async (jwt: string, obj: ItemExpediente) => {
     throw error;
   }
 };
+const Indicators = async (jwt: string) => {
+  try {
+    return await sendGet('', 'cases/indicators', jwt);
+  } catch (error) {
+    throw error;
+  }
+};
 const Edit = async (jwt: string, obj: any) => {
   try {
     const objToSend = {
@@ -105,7 +112,30 @@ const Edit = async (jwt: string, obj: any) => {
       nombreArchivo: obj.archivo ? obj.archivo.name : '',
     };
     const response: any = await sendPut(objToSend, 'cases/edit', true, jwt);
-    if (response.code === '400') {
+    if (response.code === '400' && response.data != null) {
+      const errorsString = Object.entries(response.data)
+        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
+        .join(' | ');
+      response.message += `: ${errorsString}`;
+    }
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+const ChangeStatus = async (jwt: string, id: number, status: string) => {
+  try {
+    const objToSend = {
+      id,
+      state: status,
+    };
+    const response: any = await sendPut(
+      objToSend,
+      'cases/editState',
+      true,
+      jwt,
+    );
+    if (response.code === '400' && response.data != null) {
       const errorsString = Object.entries(response.data)
         .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
         .join(' | ');
@@ -128,4 +158,6 @@ export {
   Edit,
   GetFile,
   GetListDetails,
+  Indicators,
+  ChangeStatus,
 };

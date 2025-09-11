@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Alerts, { useFlash } from '@/lib/alerts';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -44,6 +45,7 @@ export default function Etapas() {
       nombre: '',
       ayuda: '',
       flujo: '',
+      finDeFlujo: false,
     },
   });
   const [items, setItems] = useState<ItemEtapa[]>(initialItems);
@@ -70,6 +72,7 @@ export default function Etapas() {
             nombre: f.nombre,
             ayuda: f.detalle ?? '',
             flujo: String(f.flujoId ?? f.flujo_id ?? f.flujo ?? ''),
+            finDeFlujo: f.finDeFlujo,
           }));
         setItems(mapped);
       } else {
@@ -84,7 +87,7 @@ export default function Etapas() {
     (i) => String(i.flujo ?? '') === String(selectedFlujo ?? ''),
   );
   const resetForm = () => {
-    form.reset({ nombre: '', ayuda: '' });
+    form.reset({ nombre: '', ayuda: '', finDeFlujo: false });
     form.clearErrors();
   };
   const deleteItem = (item: ItemEtapa) => {
@@ -108,6 +111,7 @@ export default function Etapas() {
       nombre: item.nombre,
       ayuda: item.ayuda,
       flujo: item.flujo ?? '',
+      finDeFlujo: item.finDeFlujo,
     });
     form.clearErrors();
   };
@@ -121,6 +125,7 @@ export default function Etapas() {
           ayuda: values.ayuda,
           flujo: values.flujo,
           orden: (filteredItems?.length ?? 0) + 1,
+          finDeFlujo: values.finDeFlujo,
         };
 
         response = await NewEtapa(user?.jwt ?? '', itemEtapaAdd);
@@ -129,6 +134,7 @@ export default function Etapas() {
         itemEditted.nombre = values.nombre;
         itemEditted.ayuda = values.ayuda;
         itemEditted.flujo = values.flujo;
+        itemEditted.finDeFlujo = values.finDeFlujo;
         response = await EditEtapa(user?.jwt ?? '', itemEditted);
       }
       if (response.code == '000') {
@@ -288,6 +294,27 @@ export default function Etapas() {
                                     className="rounded-3xl"
                                     rows={10}
                                     {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="finDeFlujo" // debe ser boolean en tu schema
+                            render={({ field }) => (
+                              <FormItem className="space-y-2">
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  ETAPA FINAL DE FLUJO
+                                </FormLabel>
+                                <FormControl>
+                                  <Checkbox
+                                    checked={!!field.value}
+                                    onCheckedChange={(checked) => {
+                                      field.onChange(checked === true); // fuerza boolean
+                                      setItemToEdit(undefined);
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />

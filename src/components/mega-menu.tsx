@@ -1,3 +1,4 @@
+import { useAuth } from '@/auth/AuthContext';
 import { MegaMenuSubProfiles } from '@/partials/mega-menu/mega-menu-sub-profiles';
 import { Link, useLocation } from 'react-router-dom';
 import { MENU_MEGA } from '@/config/menu.config';
@@ -15,6 +16,7 @@ import {
 export function MegaMenu() {
   const { pathname } = useLocation();
   const { isActive, hasActiveChild } = useMenu(pathname);
+  const { user } = useAuth();
   const homeItem = MENU_MEGA[0];
   const publicProfilesItem = MENU_MEGA[1];
   const myAccountItem = MENU_MEGA[2];
@@ -78,27 +80,29 @@ export function MegaMenu() {
           </NavigationMenuLink>
         </NavigationMenuItem>
 
-        <NavigationMenuItem>
-          <NavigationMenuTrigger
-            className={cn(linkClass2)}
-            data-active={hasActiveChild(myAccountItem.children) || undefined}
-          >
-            {myAccountItem.icon && (
-              <myAccountItem.icon
-                className="size-4"
-                color="#192854"
-                fill="#18CED7"
-              />
-            )}
-            &nbsp;{myAccountItem.title}
-          </NavigationMenuTrigger>
-          <NavigationMenuContent
-            className="p-0"
-            style={{ backgroundColor: '#1DC4D8' }}
-          >
-            <MegaMenuSubProfiles items={MENU_MEGA} />
-          </NavigationMenuContent>
-        </NavigationMenuItem>
+        {user?.perfil == 'Administrador' && (
+          <NavigationMenuItem>
+            <NavigationMenuTrigger
+              className={cn(linkClass2)}
+              data-active={hasActiveChild(myAccountItem.children) || undefined}
+            >
+              {myAccountItem.icon && (
+                <myAccountItem.icon
+                  className="size-4"
+                  color="#192854"
+                  fill="#18CED7"
+                />
+              )}
+              &nbsp;{myAccountItem.title}
+            </NavigationMenuTrigger>
+            <NavigationMenuContent
+              className="p-0"
+              style={{ backgroundColor: '#1DC4D8' }}
+            >
+              <MegaMenuSubProfiles items={MENU_MEGA} />
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        )}
       </NavigationMenuList>
     </NavigationMenu>
   );

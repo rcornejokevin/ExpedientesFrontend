@@ -6,6 +6,7 @@ export interface ItemEtapa {
   ayuda?: string;
   flujo?: string;
   orden?: number;
+  finDeFlujo?: boolean;
 }
 export interface ListaOrden {
   id?: string;
@@ -21,6 +22,7 @@ const New = async (jwt: string, obj: ItemEtapa) => {
     orden: obj.orden,
     detalle: obj.ayuda,
     flujoId: obj.flujo,
+    finDeFlujo: obj.finDeFlujo,
   };
   try {
     const response: any = await sendPost(newObj, 'etapa/add', true, jwt);
@@ -41,6 +43,7 @@ const Edit = async (jwt: string, item: ItemEtapa) => {
     nombre: item.nombre,
     detalle: item.ayuda,
     flujoId: item.flujo,
+    finDeFlujo: item.finDeFlujo,
   };
   try {
     const response: any = await sendPut(newObj, 'etapa/edit', true, jwt);

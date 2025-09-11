@@ -30,6 +30,12 @@ export const getNewSchema = (cfg: ApiSchemaConfig) => {
   shape['CODIGO'] = z
     .string({ required_error: 'El codigo es requerido' })
     .min(1, 'El codigo es requerido');
+  shape['ASUNTO'] = z
+    .string({ required_error: 'El asunto es requerido' })
+    .min(1, 'El asunto es requerido');
+  shape['REMITENTE'] = z
+    .string({ required_error: 'El remitente es requerido' })
+    .min(1, 'El remitente es requerido');
   shape['NOMBRE DE EXPEDIENTE'] = z
     .string({ required_error: 'El nombre es requerido' })
     .min(1, 'El nombre es requerido');

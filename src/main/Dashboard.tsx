@@ -9,11 +9,11 @@ import {
   SquareSquare,
   TableIcon,
 } from 'lucide-react';
-import { useLoadingBar } from 'react-top-loading-bar';
 import Alerts, { useFlash } from '@/lib/alerts';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import Cards from './Dashboard/Cards';
+import Charts from './Dashboard/Charts';
 import Table from './Dashboard/Table';
 import EditExpediente from './Expediente/EditExpediente';
 import NewExpediente from './Expediente/NewExpediente';
@@ -26,6 +26,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { setAlert } = useFlash();
   const [mosaicos, setMosaicos] = useState(true);
+  const [expedientesFiltered, setExpedientesFiltered] = useState<any[]>([]);
   useEffect(() => {
     const fetchData = async () => {
       const response = await GetList(user?.jwt ?? '');
@@ -43,12 +44,14 @@ const Dashboard = () => {
           etapa: item.etapa,
         }));
         setExpedientes(data);
+        setExpedientesFiltered(data);
       } else {
         setAlert({ type: 'error', message: response.message });
       }
     };
     fetchData();
   }, [open, openEdited]);
+
   const setEditedExpediente = (editedElement: string) => {
     setExpedienteSelected(editedElement);
     setOpenEdited(true);
@@ -119,6 +122,15 @@ const Dashboard = () => {
                     <input
                       type="search"
                       placeholder="BUSCAR"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const filtered = expedientes.filter((expediente) =>
+                          expediente.nombre
+                            .toLowerCase()
+                            .includes(value.toLowerCase()),
+                        );
+                        setExpedientesFiltered(filtered);
+                      }}
                       className="h-9 w-full rounded-full border border-gray-200 pl-9 pr-4 text-[12px] font-bold uppercase tracking-wide placeholder:text-[#1E2851]/50 focus:outline-none focus:ring-0"
                       aria-label="Buscar"
                     />
@@ -142,14 +154,14 @@ const Dashboard = () => {
               {mosaicos ? (
                 <div className="flex-1 min-h-0">
                   <Cards
-                    expedientes={expedientes}
+                    expedientes={expedientesFiltered}
                     setEditedExpediente={setEditedExpediente}
                   />
                 </div>
               ) : (
                 <div className="flex-1 min-h-0">
                   <Table
-                    expedientes={expedientes}
+                    expedientes={expedientesFiltered}
                     setEditedExpediente={setEditedExpediente}
                   />
                 </div>
@@ -164,6 +176,7 @@ const Dashboard = () => {
               >
                 Indicadores
               </Label>
+              <Charts />
             </Card>
           </div>
         </div>

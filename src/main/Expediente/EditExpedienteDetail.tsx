@@ -101,7 +101,11 @@ const EditExpedienteDetail = ({
                 </Label>
                 <div className="flex space-x-2">
                   <Label style={{ color: '#539ACF' }}>FECHA DE INGRESO: </Label>
-                  <Label>{expediente.fechaIngreso}</Label>
+                  <Label>
+                    {new Date(expediente.fechaIngreso).toLocaleDateString(
+                      'es-ES',
+                    )}
+                  </Label>
                 </div>
                 <div className="flex space-x-2">
                   <Label style={{ color: '#539ACF' }}>TIPO DE PROCESO: </Label>
@@ -163,7 +167,11 @@ const EditExpedienteDetail = ({
                 {details?.map((detail: any, i) => (
                   <TableRow key={`detail_${i}`}>
                     <TableCell>{detail.etapa}</TableCell>
-                    <TableCell>{detail.subEtapa}</TableCell>
+                    <TableCell>
+                      {detail.subEtapa != ''
+                        ? detail.subEtapa
+                        : '[SIN SUB-ETAPA]'}
+                    </TableCell>
                     <TableCell align="center">
                       {new Date(detail.fechaEtapa).toLocaleDateString('es-ES')}
                     </TableCell>
