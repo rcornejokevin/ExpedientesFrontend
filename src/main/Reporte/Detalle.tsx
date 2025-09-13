@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { GetItemExpediente } from '@/models/Expediente';
+import { GetItemExpediente, GetListDetails } from '@/models/Expediente';
+import ExpedienteResumenPDF from '@/pdf/ExpedienteResumenPDF';
+import { pdf } from '@react-pdf/renderer';
 import { Download } from 'lucide-react';
+import { useLoading } from '@/providers/loading-provider';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogBody, DialogContent } from '@/components/ui/dialog';
 import EditExpediente from '../Expediente/EditExpediente';
@@ -16,11 +19,13 @@ export default function Detalle({ open, setOpen, idExpediente }: iDetalle) {
   const [loading, setLoading] = useState<boolean>(false);
   const { user } = useAuth();
   const [openEdited, setOpenEdited] = useState<boolean>(false);
+  const { setLoading: setGlobalLoading } = useLoading();
   useEffect(() => {
     const load = async () => {
       if (!open) return;
       try {
         setLoading(true);
+        setGlobalLoading(true, 'Cargando expediente...');
         const exp = await GetItemExpediente(
           user?.jwt ?? '',
           Number.parseInt(idExpediente),
@@ -28,6 +33,7 @@ export default function Detalle({ open, setOpen, idExpediente }: iDetalle) {
         setExpediente(exp);
       } finally {
         setLoading(false);
+        setGlobalLoading(false);
       }
     };
     load();
@@ -42,6 +48,7 @@ export default function Detalle({ open, setOpen, idExpediente }: iDetalle) {
       />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
+          close={false}
           className="flex w-full max-w-2xl"
           style={{ backgroundColor: '#FFFFFF' }}
         >
@@ -74,13 +81,65 @@ export default function Detalle({ open, setOpen, idExpediente }: iDetalle) {
                   <button
                     className="absolute right-0 top-0 flex items-center gap-2 text-[#2DA6DC] font-extrabold text-[12px] uppercase"
                     type="button"
+                    onClick={async () => {
+                      try {
+                        setGlobalLoading(true);
+                        if (!expediente) return;
+                        const detailsRes: any = await GetListDetails(
+                          user?.jwt ?? '',
+                          Number.parseInt(String(idExpediente)),
+                        );
+                        let detalles: any[] = [];
+                        if (detailsRes?.code === '000') {
+                          detalles = (detailsRes.data || []).map((f: any) => ({
+                            etapa: f.etapa,
+                            subEtapa: f.subEtapa,
+                            fechaEtapa: f.fecha,
+                            cargaImagen:
+                              f.nombreArchivo != '' && f.nombreArchivo != null
+                                ? true
+                                : false,
+                            estatus: f.estatus,
+                          }));
+                        }
+                        const doc = (
+                          <ExpedienteResumenPDF
+                            expediente={{
+                              codigo: expediente.codigo,
+                              nombre: expediente.nombre,
+                              fechaIngreso: expediente.fechaIngreso,
+                              flujo: expediente.flujo,
+                              estatus: expediente.estatus,
+                              asesor: expediente.asesor,
+                            }}
+                            detalles={detalles}
+                            logoSrc={'/logos/marn_azul.png'}
+                          />
+                        );
+                        const blob = await pdf(doc).toBlob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        const name = String(expediente.codigo.toString()).slice(
+                          1,
+                        );
+                        a.download = `expediente_${name}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      } catch {
+                      } finally {
+                        setGlobalLoading(false);
+                      }
+                    }}
                   >
                     EXPORTAR A PDF
                     <Download className="h-4 w-4" />
                   </button>
 
                   <div className="inline-block bg-[#CDEB73] text-[#1E2851] font-bold text-[12px] rounded-full px-3 py-1 mt-2">
-                    #{expediente?.codigo ?? ''}
+                    {expediente?.codigo ?? ''}
                   </div>
                   <h2 className="mt-2 text-2xl font-extrabold text-[#1E2851] leading-tight break-words max-w-2xl">
                     {expediente?.nombre ?? ''}

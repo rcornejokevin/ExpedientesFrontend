@@ -24,8 +24,37 @@ export interface CampoConValor {
   valor?: string;
   label: string;
 }
-const GetList = async (jwt: string) => {
-  const response = await sendGet('', 'cases/list', jwt);
+interface ExpedienteListFilters {
+  limit?: number;
+  fechaInicioIngreso?: string;
+  fechaFinIngreso?: string;
+  fechaInicioActualizacion?: string;
+  fechaFinActualizacion?: string;
+  asesorId?: number;
+  flujoId?: number;
+  etapaId?: number;
+  subEtapaId?: number;
+  estatus?: string;
+  asunto?: string;
+  remitenteId?: number;
+}
+
+const GetList = async (jwt: string, filters?: ExpedienteListFilters) => {
+  const params: Record<string, any> = {
+    limit: filters?.limit ?? 100,
+    fechaInicioIngreso: filters?.fechaInicioIngreso ?? '',
+    fechaFinIngreso: filters?.fechaFinIngreso ?? '',
+    fechaInicioActualizacion: filters?.fechaInicioActualizacion ?? '',
+    fechaFinActualizacion: filters?.fechaFinActualizacion ?? '',
+    asesorId: filters?.asesorId ?? 0,
+    flujoId: filters?.flujoId ?? 0,
+    etapaId: filters?.etapaId ?? 0,
+    subEtapaId: filters?.subEtapaId ?? 0,
+    estatus: filters?.estatus ?? '',
+    asunto: filters?.asunto ?? '',
+    remitenteId: filters?.remitenteId ?? 0,
+  };
+  const response = await sendGet(params, 'cases/list', jwt);
   return response;
 };
 const GetListDetails = async (jwt: string, id: number) => {

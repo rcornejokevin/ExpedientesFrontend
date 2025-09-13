@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
+import { GetList as GetListEtapa } from '@/models/Etapas';
 import { GetList } from '@/models/Expediente';
+import { GetList as GetListFlujo } from '@/models/Flujos';
+import { GetList as GetListRemitente } from '@/models/Remitentes';
+import { GetList as GetListSubEtapa } from '@/models/SubEtapas';
+import { GetList as GetListUsuario } from '@/models/Usuarios';
+import ReporteListadoPDF from '@/pdf/ReporteListadoPDF';
+import { pdf } from '@react-pdf/renderer';
 import {
   ColumnDef,
   getCoreRowModel,
@@ -13,6 +20,8 @@ import {
 } from '@tanstack/react-table';
 import { Download, FileChartColumn, Filter, Search } from 'lucide-react';
 import Alerts, { useFlash } from '@/lib/alerts';
+import { useLoading } from '@/providers/loading-provider';
+import { Button } from '@/components/ui/button';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
@@ -20,6 +29,8 @@ import { DataGridTable } from '@/components/ui/data-grid-table';
 import { Label } from '@/components/ui/label';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import Detalle from './Detalle';
+import Filtro from './Filtro';
+import { newSchemaType } from './NewSchemaType';
 
 interface IData {
   id: string;
@@ -37,8 +48,59 @@ const Reporte = () => {
   const [open, setOpen] = useState<boolean>(false);
   const [expedienteSelected, setExpedienteSelected] = useState<any>();
   const [expedientes, setExpedientes] = useState<any[]>([]);
+  const [openFilter, setOpenFilter] = useState<boolean>(false);
+  const [asesoresOpts, setAsesoresOpts] = useState<
+    { value: string; nombre: string }[]
+  >([]);
+  const [flujosOpts, setFlujosOpts] = useState<
+    { value: string; nombre: string }[]
+  >([]);
+  const [etapasOpts, setEtapasOpts] = useState<
+    {
+      value: string;
+      nombre: string;
+      padre?: string;
+    }[]
+  >([]);
+  const [subEtapasOpts, setSubEtapasOpts] = useState<
+    {
+      value: string;
+      nombre: string;
+      padre?: string;
+    }[]
+  >([]);
+  const [remitentesOpts, setRemitentesOpts] = useState<
+    { value: string; nombre: string }[]
+  >([]);
+  const getDateYmdHi = () => {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hour = String(now.getHours()).padStart(2, '0');
+    const minute = String(now.getMinutes()).padStart(2, '0');
+
+    return `${year}${month}${day}${hour}${minute}`;
+  };
+
+  const [filtro, setFiltro] = useState<newSchemaType>({
+    limit: 100,
+    fechaInicioIngreso: '',
+    fechaFinIngreso: '',
+    fechaInicioActualizacion: '',
+    fechaFinActualizacion: '',
+    asesorId: 0,
+    flujoId: 0,
+    etapaId: 0,
+    subEtapaId: 0,
+    estatus: '',
+    asunto: '',
+    remitenteId: 0,
+  });
   const { user } = useAuth();
   const { setAlert } = useFlash();
+  const { setLoading: setGlobalLoading } = useLoading();
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -61,6 +123,144 @@ const Reporte = () => {
       } as IData;
     });
   }, [expedientes]);
+
+  const handleExportPdf = async () => {
+    setGlobalLoading(true);
+    try {
+      const rows = data.map((r) => ({
+        numero: r.numero,
+        titulo: r.titulo,
+        ingreso: r.ingreso,
+        proceso: r.proceso,
+        estatus: r.estatus,
+        etapa: r.etapa,
+        modificacion: r.modificacion,
+      }));
+      const doc = (
+        <ReporteListadoPDF
+          titulo="Listado de Expedientes"
+          rows={rows}
+          count={rows.length}
+          logoSrc={'/logos/marn_azul.png'}
+        />
+      );
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_${getDateYmdHi()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setGlobalLoading(false);
+    }
+  };
+
+  const handleExportXlsx = async () => {
+    try {
+      setGlobalLoading(true);
+      const ExcelJSLib = (await import('exceljs')).default;
+      const wb = new ExcelJSLib.Workbook();
+      const ws = wb.addWorksheet('Reporte', {
+        properties: { defaultRowHeight: 18 },
+        pageSetup: { fitToPage: true },
+      });
+
+      // Encabezado con título y total
+      ws.mergeCells('A1', 'G1');
+      ws.getCell('A1').value = 'Listado de Expedientes';
+      ws.getCell('A1').font = {
+        bold: true,
+        size: 16,
+        color: { argb: 'FF192854' },
+      };
+
+      ws.mergeCells('A2', 'F2');
+      ws.getCell('A2').value = `Total de registros: ${data.length}`;
+      ws.getCell('A2').font = { color: { argb: 'FF192854' } };
+      const resp = await fetch('/logos/marn_azul.png');
+      const blob = await resp.blob();
+      const b64 = await new Promise<string>((resolve) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result).split(',')[1] || '');
+        fr.readAsDataURL(blob);
+      });
+      const imgId = wb.addImage({
+        base64: 'data:image/png;base64,' + b64,
+        extension: 'png',
+      });
+      ws.addImage(imgId, 'G1:G3');
+
+      // Espacio
+      ws.addRow([]);
+
+      // Cabecera de tabla con color 2DA6DC
+      const header = [
+        'NÚMERO',
+        'TÍTULO',
+        'INGRESO',
+        'PROCESO',
+        'ESTATUS',
+        'ETAPA',
+        'MODIFICACIÓN',
+      ];
+      const headerRow = ws.addRow(header);
+      headerRow.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF2DA6DC' },
+        };
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF7E8A9A' } },
+          left: { style: 'thin', color: { argb: 'FF7E8A9A' } },
+          bottom: { style: 'thin', color: { argb: 'FF7E8A9A' } },
+          right: { style: 'thin', color: { argb: 'FF7E8A9A' } },
+        };
+      });
+
+      // Datos
+      for (const r of data) {
+        ws.addRow([
+          r.numero,
+          r.titulo,
+          r.ingreso,
+          r.proceso,
+          r.estatus,
+          r.etapa,
+          r.modificacion,
+        ]);
+      }
+
+      const widths = [14, 40, 14, 18, 14, 18, 18];
+      ws.columns.forEach(
+        (col: any, i: number) => (col.width = widths[i] || 16),
+      );
+      ws.views = [{ state: 'frozen', ySplit: headerRow.number }];
+
+      const buffer = await wb.xlsx.writeBuffer();
+      const blobBuf = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = URL.createObjectURL(blobBuf);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_${getDateYmdHi()}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+    } finally {
+      setGlobalLoading(false);
+    }
+  };
   const columns = useMemo<ColumnDef<IData>[]>(
     () => [
       {
@@ -215,9 +415,9 @@ const Reporte = () => {
   });
   useEffect(() => {
     const fetchData = async () => {
-      const response = await GetList(user?.jwt ?? '');
+      const response = await GetList(user?.jwt ?? '', filtro);
       if (response.code === '000') {
-        const data = response.data.map((item: any) => ({
+        const mapped = response.data.map((item: any) => ({
           nombre: item.nombre,
           codigo: item.codigo,
           tipo: item.etapaId,
@@ -231,7 +431,7 @@ const Reporte = () => {
           flujo: item.flujo,
           etapa: item.etapa,
         }));
-        setExpedientes(data);
+        setExpedientes(mapped);
       } else {
         setAlert({ type: 'error', message: response.message });
       }
@@ -239,12 +439,111 @@ const Reporte = () => {
     fetchData();
   }, [0]);
 
+  // Cargar catálogos para selects de filtros
+  useEffect(() => {
+    const loadCatalogs = async () => {
+      try {
+        const [usuariosRes, flujosRes, etapasRes, subRes, remitentesRes] =
+          await Promise.all([
+            GetListUsuario(user?.jwt ?? ''),
+            GetListFlujo(user?.jwt ?? ''),
+            GetListEtapa(user?.jwt ?? ''),
+            GetListSubEtapa(user?.jwt ?? ''),
+            GetListRemitente(user?.jwt ?? ''),
+          ]);
+        if (usuariosRes.code === '000') {
+          setAsesoresOpts(
+            (usuariosRes.data || []).map((u: any) => ({
+              value: String(u.id),
+              nombre: u.username,
+            })),
+          );
+        }
+        if (flujosRes.code === '000') {
+          setFlujosOpts(
+            (flujosRes.data || []).map((f: any) => ({
+              value: String(f.id),
+              nombre: f.nombre,
+            })),
+          );
+        }
+        if (etapasRes.code === '000') {
+          setEtapasOpts(
+            (etapasRes.data || []).map((e: any) => ({
+              value: String(e.id),
+              nombre: e.nombre,
+              padre: String(e.flujoId ?? ''),
+            })),
+          );
+        }
+        if (subRes.code === '000') {
+          setSubEtapasOpts(
+            (subRes.data || []).map((s: any) => ({
+              value: String(s.id),
+              nombre: s.nombre,
+              padre: String(s.etapaId ?? ''),
+            })),
+          );
+        }
+        if (remitentesRes.code === '000') {
+          setRemitentesOpts(
+            (remitentesRes.data || []).map((r: any) => ({
+              value: String(r.id),
+              nombre: r.descripcion,
+            })),
+          );
+        }
+      } catch (e) {
+        // no-op
+      }
+    };
+    loadCatalogs();
+  }, [user?.jwt]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await GetList(user?.jwt ?? '', filtro);
+      if (response.code === '000') {
+        const mapped = response.data.map((item: any) => ({
+          nombre: item.nombre,
+          codigo: item.codigo,
+          tipo: item.etapaId,
+          estatus: item.estatus,
+          fechaActualizacion: new Date(
+            item.fechaActualizacion,
+          ).toLocaleDateString('es-ES'),
+          fechaIngreso: new Date(item.fechaIngreso).toLocaleDateString('es-ES'),
+          id: item.id,
+          flujoId: item.flujoId,
+          flujo: item.flujo,
+          etapa: item.etapa,
+        }));
+        setExpedientes(mapped);
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    };
+    fetchData();
+  }, [filtro]);
+
   const setEditedExpediente = (editedElement: string) => {
+    setGlobalLoading(true, 'Abriendo expediente...');
     setExpedienteSelected(editedElement);
     setOpen(true);
   };
   return (
     <>
+      <Filtro
+        setOpen={setOpenFilter}
+        open={openFilter}
+        setFiltro={setFiltro}
+        filtro={filtro}
+        asesores={asesoresOpts}
+        flujos={flujosOpts}
+        etapas={etapasOpts}
+        subEtapas={subEtapasOpts}
+        remitentes={remitentesOpts}
+      />
       <div className="mx-5 mt-5 min-h-screen flex flex-col">
         {expedienteSelected && (
           <Detalle
@@ -271,10 +570,17 @@ const Reporte = () => {
               <div className="flex">
                 <div className="hidden items-center gap-6 md:flex">
                   <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-[#D7ED1E]" />
-                    <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70">
-                      Filtrar
-                    </span>
+                    <Button
+                      style={{ backgroundColor: 'transparent' }}
+                      onClick={() => {
+                        setOpenFilter(!openFilter);
+                      }}
+                    >
+                      <Filter className="h-4 w-4 text-[#D7ED1E]" />
+                      <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70">
+                        Filtrar
+                      </span>
+                    </Button>
                   </div>
                   <div className="relative w-60 md:w-72 mx-5">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D7ED1E]" />
@@ -290,18 +596,28 @@ const Reporte = () => {
                       aria-label="Buscar"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <Button
+                    style={{ backgroundColor: 'transparent' }}
+                    onClick={() => {
+                      handleExportPdf();
+                    }}
+                  >
                     <Download className="h-4 w-4 text-[#D7ED1E]" />
                     <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70">
                       Exportar a PDF
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  </Button>
+                  <Button
+                    style={{ backgroundColor: 'transparent' }}
+                    onClick={() => {
+                      handleExportXlsx();
+                    }}
+                  >
                     <Download className="h-4 w-4 text-[#D7ED1E]" />
                     <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70">
                       Exportar a Excel
                     </span>
-                  </div>
+                  </Button>
                 </div>
               </div>
             </div>

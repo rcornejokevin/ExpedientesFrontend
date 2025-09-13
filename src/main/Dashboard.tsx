@@ -111,12 +111,12 @@ const Dashboard = () => {
                       </button>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  {/*<div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-[#D7ED1E]" />
                     <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70">
                       Filtrar
                     </span>
-                  </div>
+                  </div>*/}
                   <div className="relative w-60 md:w-72">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D7ED1E]" />
                     <input

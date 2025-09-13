@@ -48,6 +48,7 @@ export default function EditExpediente({
     setHistorial(true);
     const loadInformation = async () => {
       setLoading(true);
+      setExpediente(undefined);
       try {
         const exp: any = await GetItemExpediente(
           user?.jwt ?? '',
@@ -123,7 +124,7 @@ export default function EditExpediente({
       }
     };
     loadInformation();
-  }, [open]);
+  }, [open, idExpediente]);
 
   if (expediente === undefined) return <></>;
   return (
