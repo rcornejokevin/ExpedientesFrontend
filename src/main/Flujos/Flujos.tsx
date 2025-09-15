@@ -130,7 +130,7 @@ export default function Flujos() {
   };
   return (
     <>
-      <div className="mx-5 my-5">
+      <div className="mx-5 my-5 grid grid-rows-[auto,1fr] h-[70vh]">
         <Alerts />
         <ConfirmationDialog
           show={openDialog}
@@ -148,7 +148,7 @@ export default function Flujos() {
           </Label>
           <hr className="border-t border-gray-300 my-4" />
         </div>
-        <div className="flex">
+        <div className="flex overflow-y-auto pr-2">
           <div className="basis-1/2">
             <div className="flex flex-col gap-4">
               <div className="flex">

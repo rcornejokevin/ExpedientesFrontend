@@ -199,47 +199,50 @@ export default function SubEtapas() {
                 }
               }}
             />
-            <div className="flex items-center gap-2 mb-4 ">
-              <AlignRight color="#18CED7" className="size-20" />
-              <Label className="flex items-center gap-2 font-bold text-3xl color-dark-blue-marn">
-                Editor de Sub-Etapa
-              </Label>
-            </div>
+            <div className="grid grid-rows-[auto,1fr] h-[70vh]">
+              <div>
+                <div className="flex items-center gap-2 mb-4 ">
+                  <AlignRight color="#18CED7" className="size-20" />
+                  <Label className="flex items-center gap-2 font-bold text-3xl color-dark-blue-marn">
+                    Editor de Sub-Etapa
+                  </Label>
+                </div>
 
-            <div className="flex">
-              <div className="basis-2/5">
-                <div className="flex flex-col mr-5">
-                  <FieldFlujo
-                    form={form}
-                    onChange={() => {
-                      setItemToEdit(undefined);
-                      setItemToDelete(undefined);
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="basis-1/5">
-                <div className="flex justify-center items-center p-3">
-                  <Plus size={50} />
-                </div>
-              </div>
-              <div className="basis-2/5">
-                <div className="flex flex-col mr-5">
-                  <FieldEtapa
-                    form={form}
-                    onChange={() => {
-                      setItemToEdit(undefined);
-                      setItemToDelete(undefined);
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-            <hr className="border-e border-border my-5" />
-            {(form.watch('flujo') ?? '') !== '' &&
-            (form.watch('etapa') ?? '') !== '' ? (
-              <>
                 <div className="flex">
+                  <div className="basis-2/5">
+                    <div className="flex flex-col mr-5">
+                      <FieldFlujo
+                        form={form}
+                        onChange={() => {
+                          setItemToEdit(undefined);
+                          setItemToDelete(undefined);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="basis-1/5">
+                    <div className="flex justify-center items-center p-3">
+                      <Plus size={50} />
+                    </div>
+                  </div>
+                  <div className="basis-2/5">
+                    <div className="flex flex-col mr-5">
+                      <FieldEtapa
+                        form={form}
+                        onChange={() => {
+                          setItemToEdit(undefined);
+                          setItemToDelete(undefined);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <hr className="border-e border-border my-5" />
+              </div>
+
+              {(form.watch('flujo') ?? '') !== '' &&
+              (form.watch('etapa') ?? '') !== '' ? (
+                <div className="flex overflow-y-auto pr-2">
                   <div className="basis-1/2">
                     <div className="flex flex-col gap-4">
                       <div className="flex">
@@ -356,10 +359,10 @@ export default function SubEtapas() {
                     </div>
                   </div>
                 </div>
-              </>
-            ) : (
-              <></>
-            )}
+              ) : (
+                <div />
+              )}
+            </div>
           </form>
         </Form>
       </div>

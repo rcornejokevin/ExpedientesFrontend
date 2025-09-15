@@ -222,7 +222,7 @@ export default function Etapas() {
             <hr className="border-e border-border my-5" />
             {(form.watch('flujo') ?? '') !== '' ? (
               <>
-                <div className="flex">
+                <div className="flex max-h-[48vh] overflow-y-auto pr-2">
                   <div className="basis-1/2">
                     <div className="flex flex-col gap-4">
                       <div className="flex">

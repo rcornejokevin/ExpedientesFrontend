@@ -629,8 +629,8 @@ const Reporte = () => {
                 tableClassNames={{ headerRow: 'bg-[#2DA6DC]' }}
               >
                 <div className="w-full space-y-2.5">
-                  <DataGridContainer className="bg-white">
-                    <ScrollArea>
+                  <DataGridContainer className="bg-white h-[55vh] overflow-auto">
+                    <ScrollArea className="h-full">
                       <DataGridTable />
                       <ScrollBar orientation="horizontal" />
                     </ScrollArea>

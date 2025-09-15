@@ -226,7 +226,7 @@ export default function Campos() {
   };
   return (
     <>
-      <div className="mx-5 my-5">
+      <div className="mx-5 my-5 grid grid-rows-[auto,1fr] h-[70vh]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <Alerts />
@@ -282,7 +282,7 @@ export default function Campos() {
             <hr className="border-e border-border my-5" />
             {(form.watch('flujo') ?? '') !== '' ? (
               <>
-                <div className="flex">
+                <div className="grid grid-cols-2 gap-4 h-[calc(70vh-200px)] overflow-hidden">
                   <div className="basis-1/2">
                     <div className="flex flex-col gap-4">
                       <div className="flex">
@@ -303,7 +303,7 @@ export default function Campos() {
                     </div>
                   </div>
                   <div className="border-e border-border mx-1.5 lg:mx-5"></div>
-                  <div className="basis-1/2">
+                  <div className="basis-1/2 overflow-y-auto pr-2">
                     <div className="flex flex-col gap-5">
                       <div className="flex items-center">
                         <Label className="flex text-lg color-dark-blue-marn font-bold items-center gap-1">

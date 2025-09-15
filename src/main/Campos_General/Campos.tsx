@@ -234,7 +234,7 @@ export default function CamposGeneral() {
   };
   return (
     <>
-      <div className="mx-5 my-5">
+      <div className="mx-5 my-5 grid grid-rows-[auto,1fr] h-[50vh]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <Alerts />
@@ -267,7 +267,7 @@ export default function CamposGeneral() {
             <hr className="border-e border-border my-5" />
             {(form.watch('flujo') ?? '') !== '' ? (
               <>
-                <div className="flex">
+                <div className="flex max-h-[48vh] overflow-y-auto pr-2">
                   <div className="basis-1/2">
                     <div className="flex flex-col gap-4">
                       <div className="flex">
