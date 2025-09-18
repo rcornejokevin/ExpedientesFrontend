@@ -126,7 +126,6 @@ export default function Flujos() {
         };
         response = await NewFlujo(user?.jwt ?? '', newObj);
       } else {
-        debugger;
         const itemEditted: ItemFlujo = itemToEdit;
         itemEditted.nombre = values.nombre;
         itemEditted.correlativo = values.correlativo;
