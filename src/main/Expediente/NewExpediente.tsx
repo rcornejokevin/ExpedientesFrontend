@@ -491,14 +491,18 @@ export default function NewExpediente({
                                   <SelectValue placeholder="Seleccione un Flujo" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {flujo?.map((item) => (
-                                    <SelectItem
-                                      key={item.value}
-                                      value={String(item.value)}
-                                    >
-                                      {item.nombre}
-                                    </SelectItem>
-                                  ))}
+                                  {flujo
+                                    ?.sort((a, b) =>
+                                      a.nombre.localeCompare(b.nombre),
+                                    )
+                                    ?.map((item) => (
+                                      <SelectItem
+                                        key={item.value}
+                                        value={String(item.value)}
+                                      >
+                                        {item.nombre}
+                                      </SelectItem>
+                                    ))}
                                 </SelectContent>
                               </Select>
                             </FormControl>
@@ -696,7 +700,7 @@ export default function NewExpediente({
                       </div>
 
                       {filteredSchemaCfg?.fields.map((f) => (
-                        <div key={f.nombre}>
+                        <div key={f.id}>
                           {f.tipo == 'Fecha' ? (
                             <DatePickerMarn
                               form={form}
@@ -707,7 +711,7 @@ export default function NewExpediente({
                             />
                           ) : (
                             <FormField
-                              key={f.nombre}
+                              key={f.id}
                               control={form.control}
                               name={f.nombre}
                               render={({ field }) => (

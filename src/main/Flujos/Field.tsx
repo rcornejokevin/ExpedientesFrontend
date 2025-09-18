@@ -65,11 +65,13 @@ const Field = ({ form, onChange }: iField) => {
                 <SelectValue placeholder="Seleccione un Flujo" />
               </SelectTrigger>
               <SelectContent>
-                {items?.map((item: any) => (
-                  <SelectItem key={item.id} value={String(item.id)}>
-                    {item.nombre}
-                  </SelectItem>
-                ))}
+                {items
+                  ?.sort((a, b) => a.nombre.localeCompare(b.nombre))
+                  .map((item: any) => (
+                    <SelectItem key={item.id} value={String(item.id)}>
+                      {item.nombre}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </FormControl>

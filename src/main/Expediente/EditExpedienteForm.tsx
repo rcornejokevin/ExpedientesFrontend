@@ -73,7 +73,7 @@ const EditExpedienteForm = ({
   const defaultValues = useMemo(() => {
     if (!schemaCfg) return {};
     const def: Record<string, any> = {};
-    let jsonDatos = [];
+    let jsonDatos: any[] = [];
     try {
       jsonDatos = JSON.parse(expediente.campoValorJson);
     } catch (e) {
@@ -84,13 +84,22 @@ const EditExpedienteForm = ({
       }
     }
     for (const f of schemaCfg.fields) {
-      def[f.nombre] = f.tipo == 'Cheque' ? false : '';
+      def[f.nombre] = f.tipo === 'Cheque' ? false : '';
       for (const field of jsonDatos) {
-        if (field.label == f.label && f.editable) {
+        if (field.label === f.label && f.editable) {
           switch (f.tipo) {
-            case 'Fecha':
-              def[f.nombre] = new Date(field.valor);
+            case 'Fecha': {
+              const rawValue = field.valor as string | undefined;
+              if (rawValue) {
+                const parsedDate = new Date(rawValue);
+                def[f.nombre] = Number.isNaN(parsedDate.getTime())
+                  ? ''
+                  : rawValue;
+              } else {
+                def[f.nombre] = '';
+              }
               break;
+            }
             case 'Cheque':
               def[f.nombre] = field.valor == 'Si' ? true : false;
               break;
@@ -110,7 +119,7 @@ const EditExpedienteForm = ({
     def['aniadirArchivo'] = false;
     def['PDF_EXPEDIENTE'] = null;
     return def;
-  }, [schemaCfg]);
+  }, [schemaCfg, expediente]);
   const form = useForm<Record<string, any>>({
     resolver,
     defaultValues,
@@ -493,7 +502,8 @@ const EditExpedienteForm = ({
                     )}
                   </div>
                 </div>
-                {form.watch('PDF_EXPEDIENTE') != null && (
+                {form.watch('PDF_EXPEDIENTE') != null &&
+                expediente.miniatura != null ? (
                   <FormField
                     control={form.control}
                     name="aniadirArchivo" // debe ser boolean en tu schema
@@ -514,6 +524,8 @@ const EditExpedienteForm = ({
                       </FormItem>
                     )}
                   />
+                ) : (
+                  <></>
                 )}
                 <div className="flex items-center gap-2 mb-4 ">
                   <Network color="#2DA6DC" className="size-7" />
@@ -637,14 +649,18 @@ const EditExpedienteForm = ({
                             <SelectValue placeholder="Seleccione un asesor" />
                           </SelectTrigger>
                           <SelectContent>
-                            {asesor?.map((item) => (
-                              <SelectItem
-                                key={item.value}
-                                value={String(item.value)}
-                              >
-                                {item.nombre}
-                              </SelectItem>
-                            ))}
+                            {asesor
+                              ?.sort((a: any, b: any) =>
+                                a.value.localeCompare(b.value),
+                              )
+                              ?.map((item) => (
+                                <SelectItem
+                                  key={item.value}
+                                  value={String(item.value)}
+                                >
+                                  {item.nombre}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -669,6 +685,7 @@ const EditExpedienteForm = ({
                         form={form}
                         name={f.nombre}
                         label={f.label}
+                        defaultValue={defaultValues[f.nombre]}
                         requerido={f.requerido}
                       />
                     ) : (
@@ -700,11 +717,10 @@ const EditExpedienteForm = ({
                                 />
                               ) : f.tipo === 'Opciones' ? (
                                 <Select
-                                  onValueChange={(val) => {
-                                    field.onChange(val);
-                                  }}
+                                  onValueChange={field.onChange}
                                   value={field.value}
-                                  defaultValue={field.value}
+                                  name={f.nombre}
+                                  defaultValue={defaultValues[f.nombre]}
                                 >
                                   <SelectTrigger className="rounded-3xl">
                                     <SelectValue placeholder={f.placeholder} />
@@ -715,7 +731,7 @@ const EditExpedienteForm = ({
                                       .map((op) => op.trim())
                                       .sort((a, b) => a.localeCompare(b))
                                       .map((op) => (
-                                        <SelectItem key={op} value={op}>
+                                        <SelectItem key={op} value={String(op)}>
                                           {op}
                                         </SelectItem>
                                       ))}
