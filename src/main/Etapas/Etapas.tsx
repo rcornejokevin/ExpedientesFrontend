@@ -87,7 +87,12 @@ export default function Etapas() {
     (i) => String(i.flujo ?? '') === String(selectedFlujo ?? ''),
   );
   const resetForm = () => {
-    form.reset({ nombre: '', ayuda: '', finDeFlujo: false });
+    form.reset({
+      nombre: '',
+      ayuda: '',
+      finDeFlujo: false,
+      flujo: selectedFlujo,
+    });
     form.clearErrors();
   };
   const deleteItem = (item: ItemEtapa) => {
@@ -313,7 +318,6 @@ export default function Etapas() {
                                     checked={!!field.value}
                                     onCheckedChange={(checked) => {
                                       field.onChange(checked === true); // fuerza boolean
-                                      setItemToEdit(undefined);
                                     }}
                                   />
                                 </FormControl>

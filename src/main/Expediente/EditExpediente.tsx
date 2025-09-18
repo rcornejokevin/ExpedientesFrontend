@@ -54,14 +54,14 @@ export default function EditExpediente({
           user?.jwt ?? '',
           Number.parseInt(idExpediente),
         );
-        setExtraFields(JSON.parse(exp.campoValorJson));
-
+        setExtraFields([]);
+        if (exp.campoValorJson != '')
+          setExtraFields(JSON.parse(exp.campoValorJson));
         const [usuariosRes, subRes, etapasRes] = await Promise.all([
           GetListUsuario(user?.jwt ?? ''),
           GetListSubEtapa(user?.jwt ?? ''),
           GetListEtapas(user?.jwt ?? ''),
         ]);
-
         // Usuarios
         if (usuariosRes.code === '000') {
           const mapped: any = usuariosRes.data.map((f: any) => ({
@@ -114,11 +114,12 @@ export default function EditExpediente({
         } else {
           setAlert({ type: 'error', message: etapasRes.message });
         }
-
-        // Finalmente, actualiza el expediente cuando todo se mapeó correctamente
         setExpediente(exp);
       } catch (error) {
-        setAlert({ type: 'error', message: error });
+        setAlert({
+          type: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        });
       } finally {
         setLoading(false);
       }

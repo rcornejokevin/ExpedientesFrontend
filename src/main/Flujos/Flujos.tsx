@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Alerts, { useFlash } from '@/lib/alerts';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -41,6 +42,11 @@ export default function Flujos() {
     defaultValues: {
       nombre: '',
       ayuda: '',
+      correlativo: '',
+      archivado: false,
+      devolucionAlRemitente: false,
+      enviadoAJudicial: false,
+      flujoAsociado: false,
     },
   });
   const [items, setItems] = useState<ItemFlujo[]>(initialItems);
@@ -58,7 +64,12 @@ export default function Flujos() {
         const mapped: ItemFlujo[] = data.map((f: any) => ({
           id: String(f.id),
           nombre: f.nombre,
+          correlativo: f.correlativo,
           ayuda: f.detalle ?? '',
+          CierreArchivado: f.cierreArchivado,
+          CierreDevolucionAlRemitente: f.cierreDevolucionAlRemitente,
+          CierreEnviadoAJudicial: f.cierreEnviadoAJudicial,
+          flujoAsociado: f.flujoAsociado,
         }));
         setItems(mapped);
       } else {
@@ -88,7 +99,15 @@ export default function Flujos() {
   };
   const loadToEdit = (item: ItemFlujo) => {
     setItemToEdit(item);
-    form.reset({ nombre: item.nombre, ayuda: item.ayuda ?? '' });
+    form.reset({
+      nombre: item.nombre,
+      ayuda: item.ayuda ?? '',
+      correlativo: item.correlativo,
+      archivado: item.CierreArchivado ?? false,
+      devolucionAlRemitente: item.CierreDevolucionAlRemitente ?? false,
+      enviadoAJudicial: item.CierreEnviadoAJudicial ?? false,
+      flujoAsociado: item.flujoAsociado ?? false,
+    });
     form.clearErrors();
   };
   async function onSubmit(values: newSchemaType) {
@@ -96,11 +115,26 @@ export default function Flujos() {
     try {
       let response: any = null;
       if (itemToEdit == null) {
-        response = await NewFlujo(user?.jwt ?? '', values.nombre, values.ayuda);
+        const newObj = {
+          nombre: values.nombre,
+          correlativo: values.correlativo,
+          detalle: values.ayuda,
+          cierreArchivado: values.archivado ?? false,
+          cierreDevolucionAlRemitente: values.devolucionAlRemitente ?? false,
+          cierreEnviadoAJudicial: values.enviadoAJudicial ?? false,
+          flujoAsociado: values.flujoAsociado ?? false,
+        };
+        response = await NewFlujo(user?.jwt ?? '', newObj);
       } else {
+        debugger;
         const itemEditted: ItemFlujo = itemToEdit;
         itemEditted.nombre = values.nombre;
+        itemEditted.correlativo = values.correlativo;
         itemEditted.ayuda = values.ayuda;
+        itemEditted.CierreArchivado = values.archivado;
+        itemEditted.CierreDevolucionAlRemitente = values.devolucionAlRemitente;
+        itemEditted.CierreEnviadoAJudicial = values.enviadoAJudicial;
+        itemEditted.flujoAsociado = values.flujoAsociado;
         response = await EditFlujo(user?.jwt ?? '', itemEditted);
       }
       if (response.code == '000') {
@@ -125,150 +159,262 @@ export default function Flujos() {
     }
   }
   const loadToDelete = (item: ItemFlujo) => {
+    setItemToEdit(undefined);
     setItemToDelete(item);
     setOpenDialog(true);
   };
   return (
     <>
-      <div className="mx-5 my-5 grid grid-rows-[auto,1fr] h-[70vh]">
-        <Alerts />
-        <ConfirmationDialog
-          show={openDialog}
-          onOpenChange={setOpenDialog}
-          action={() => {
-            if (itemToDelete !== undefined) {
-              deleteItem(itemToDelete);
-            }
-          }}
-        />
-        <div className="flex items-center gap-2 mb-4 ">
-          <Network color="#18CED7" className="size-20" />
-          <Label className="flex items-center gap-2 font-bold text-3xl color-dark-blue-marn">
-            Editor de Flujos
-          </Label>
-          <hr className="border-t border-gray-300 my-4" />
-        </div>
-        <div className="flex overflow-y-auto pr-2">
-          <div className="basis-1/2">
-            <div className="flex flex-col gap-4">
-              <div className="flex">
-                <Label className="text-lg color-dark-blue-marn font-bold">
-                  EDITAR UN FLUJO EXISTENTE
-                </Label>
-              </div>
-              <div className="flex">
-                <Cards
-                  isOrdered={false}
-                  items={items}
-                  loadToEdit={loadToEdit}
-                  loadToDelete={loadToDelete}
-                />
-              </div>
+      <div className="mx-5 my-5 grid grid-rows-[auto,1fr] h-[50vh]">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Alerts />
+            <ConfirmationDialog
+              show={openDialog}
+              onOpenChange={setOpenDialog}
+              action={() => {
+                if (itemToDelete !== undefined) {
+                  deleteItem(itemToDelete);
+                }
+              }}
+            />
+            <div className="flex items-center gap-2 mb-4 ">
+              <Network color="#18CED7" className="size-20" />
+              <Label className="flex items-center gap-2 font-bold text-3xl color-dark-blue-marn">
+                Editor de Flujos
+              </Label>
             </div>
-          </div>
-          <div className="border-e border-border mx-1.5 lg:mx-5"></div>
-          <div className="basis-1/2">
-            <div className="flex flex-col gap-5">
-              <div className="flex items-center">
-                <Label className="flex text-lg color-dark-blue-marn font-bold items-center gap-1">
-                  {itemToEdit == null ? (
-                    <>
-                      <Plus className="size-4" />
-                      CREAR UN NUEVO FLUJO
-                    </>
-                  ) : (
-                    <>
-                      <Pencil className="size-4" />
-                      EDITAR EL FLUJO
-                    </>
-                  )}
-                </Label>
+            <hr className="border-t border-gray-300 my-4" />
+            <div className="flex max-h-[48vh] overflow-y-auto pr-2">
+              <div className="basis-1/2">
+                <div className="flex flex-col gap-4">
+                  <div className="flex">
+                    <Label className="text-lg color-dark-blue-marn font-bold">
+                      EDITAR UN FLUJO EXISTENTE
+                    </Label>
+                  </div>
+                  <div className="flex">
+                    <Cards
+                      isOrdered={false}
+                      items={items}
+                      loadToEdit={loadToEdit}
+                      loadToDelete={loadToDelete}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center">
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="block w-full space-y-5"
-                  >
-                    <FormField
-                      control={form.control}
-                      name="nombre"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            NOMBRE DEL FLUJO
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Ingrese el nombre del flujo"
-                              className="rounded-3xl"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+              <div className="border-e border-border mx-1.5 lg:mx-5"></div>
+              <div className="basis-1/2">
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-center">
+                    <Label className="flex text-lg color-dark-blue-marn font-bold items-center gap-1">
+                      {itemToEdit == null ? (
+                        <>
+                          <Plus className="size-4" />
+                          CREAR UN NUEVO FLUJO
+                        </>
+                      ) : (
+                        <>
+                          <Pencil className="size-4" />
+                          EDITAR EL FLUJO
+                        </>
                       )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="ayuda"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            TEXTO DE AYUDA
-                          </FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Ingrese el texto de ayuda del flujo"
-                              className="rounded-3xl"
-                              rows={10}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        className="btn 
+                    </Label>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="block w-full space-y-5">
+                      <FormField
+                        control={form.control}
+                        name="correlativo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              CORRELATIVO DEL FLUJO
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Ingrese el correlativo del flujo"
+                                className="rounded-3xl"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="nombre"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              NOMBRE DEL FLUJO
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Ingrese el nombre del flujo"
+                                className="rounded-3xl"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="ayuda"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              TEXTO DE AYUDA
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Ingrese el texto de ayuda del flujo"
+                                className="rounded-3xl"
+                                rows={3}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex flex-row gap-20">
+                        <div className="flex">
+                          <FormField
+                            control={form.control}
+                            name="archivado"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={!!field.value}
+                                    onCheckedChange={(checked) => {
+                                      field.onChange(checked === true);
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  Archivado
+                                </FormLabel>
+
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="flex">
+                          <FormField
+                            control={form.control}
+                            name="devolucionAlRemitente"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={!!field.value}
+                                    onCheckedChange={(checked) => {
+                                      field.onChange(checked === true);
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  Devolución al Remitente
+                                </FormLabel>
+
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="flex">
+                          <FormField
+                            control={form.control}
+                            name="enviadoAJudicial"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={!!field.value}
+                                    onCheckedChange={(checked) => {
+                                      field.onChange(checked === true);
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="color-dark-blue-marn font-bold">
+                                  Enviado a Judicial
+                                </FormLabel>
+
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name="flujoAsociado"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row">
+                            <FormControl>
+                              <Checkbox
+                                checked={!!field.value}
+                                onCheckedChange={(checked) => {
+                                  field.onChange(checked === true);
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              Expediente asociado a otro flujo
+                            </FormLabel>
+
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex justify-end">
+                        <button
+                          type="submit"
+                          className="btn 
             btn-lg py-2 px-4
             rounded-xl px-10 bg-blue-400 
              text-white hover:bg-blue-600
              
              "
-                      >
-                        {loading ? (
-                          <span className="flex items-center gap-2">
-                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                            Cargando...
-                          </span>
-                        ) : (
-                          <>
-                            <div className="flex">
-                              {itemToEdit !== undefined ? (
-                                <>
-                                  <Pencil />
-                                  EDITAR FLUJO
-                                </>
-                              ) : (
-                                <>
-                                  <PlusIcon />
-                                  CREAR NUEVO FLUJO
-                                </>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </button>
+                        >
+                          {loading ? (
+                            <span className="flex items-center gap-2">
+                              <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                              Cargando...
+                            </span>
+                          ) : (
+                            <>
+                              <div className="flex">
+                                {itemToEdit !== undefined ? (
+                                  <>
+                                    <Pencil />
+                                    EDITAR FLUJO
+                                  </>
+                                ) : (
+                                  <>
+                                    <PlusIcon />
+                                    CREAR NUEVO FLUJO
+                                  </>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </form>
-                </Form>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </form>
+        </Form>
       </div>
     </>
   );

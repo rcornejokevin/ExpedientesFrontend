@@ -5,7 +5,7 @@ import {
   GetList as GetListUsuario,
   Usuario,
 } from '@/models/Usuarios';
-import { Pencil, Plus, Trash2, User } from 'lucide-react';
+import { CheckCircle, Pencil, Plus, Trash2, User, X } from 'lucide-react';
 import Alerts, { useFlash } from '@/lib/alerts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,7 @@ export default function Usuarios() {
             id: String(f.id),
             username: f.username,
             perfil: f.perfil,
+            operativo: f.operativo,
           }));
         setUsers(mapped);
       }
@@ -113,6 +114,7 @@ export default function Usuarios() {
               <TableHead className="text-white font-bold">ID</TableHead>
               <TableHead className="text-white font-bold">USERNAME</TableHead>
               <TableHead className="text-white font-bold">PERFIL</TableHead>
+              <TableHead className="text-white font-bold">OPERATIVO</TableHead>
               <TableHead className="text-white font-bold">ACCIÓN</TableHead>
             </TableRow>
           </TableHeader>
@@ -124,6 +126,9 @@ export default function Usuarios() {
                 <TableCell>{user.username}</TableCell>
                 <TableCell>
                   <Badge variant="secondary">{user.perfil}</Badge>
+                </TableCell>
+                <TableCell>
+                  {user.operativo ? <CheckCircle color="green" /> : <X />}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-4">

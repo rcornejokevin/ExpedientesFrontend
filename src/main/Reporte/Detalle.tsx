@@ -178,6 +178,16 @@ export default function Detalle({ open, setOpen, idExpediente }: iDetalle) {
                         {expediente?.asesor ?? '-'}
                       </span>
                     </div>
+                    {expediente.expedienteRelacionado != '' && (
+                      <div className="text-[14px]">
+                        <span className="font-extrabold text-[#2F68FF]">
+                          Expediente Relacionado:
+                        </span>{' '}
+                        <span className="text-[#1E2851]">
+                          {expediente?.expedienteRelacionado ?? '-'}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-6 flex justify-end">

@@ -41,7 +41,10 @@ const EditExpedienteDetail = ({
         setAlert({ type: 'error', message: response.message });
       }
     } catch (error) {
-      setAlert({ type: 'error', message: error });
+      setAlert({
+        type: 'error',
+        message: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setLoading(false);
     }
@@ -68,7 +71,10 @@ const EditExpedienteDetail = ({
           setAlert({ type: 'error', message: dataDetail.message });
         }
       } catch (error) {
-        setAlert({ type: 'error', message: error });
+        setAlert({
+          type: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        });
       } finally {
         setLoading(false);
       }

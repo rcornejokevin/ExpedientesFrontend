@@ -11,6 +11,7 @@ import CaratulaPDF from '@/pdf/CaratulaPDF';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   FileImage,
+  ListCheck,
   LoaderCircleIcon,
   Network,
   Printer,
@@ -45,22 +46,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import DatePickerMarn from '@/components/datePicker';
 import PdfUpload from '@/components/pdf-upload';
 import { printReactPdf } from '@/components/printPdf';
 import { ApiSchemaConfig, getNewSchema } from './NewSchemaType';
 
-interface AddUsuarioI {
+interface iNewExpediente {
   open: boolean;
   setOpen: any;
+  expedientes: any[];
 }
 interface ItemSelect {
   nombre: string;
   value: string;
   padre?: string;
   orden?: number;
+  flujoRelacionado?: boolean;
 }
-export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
+export default function NewExpediente({
+  open,
+  setOpen,
+  expedientes,
+}: iNewExpediente) {
   const [loading, setLoading] = useState<boolean>(false);
   const [onPrint, setOnPrint] = useState<boolean>(false);
   const { user } = useAuth();
@@ -75,6 +83,8 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
   const [remitente, setRemitente] = useState<ItemSelect[]>();
   useEffect(() => {
     setOnPrint(false);
+    form.reset({ 'TIPO DE PROCESO': '' });
+    changeFunction('');
     const fetchData = async () => {
       const response = await GetListCampo(user?.jwt ?? '');
       if (response.code === '000') {
@@ -92,6 +102,7 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
               opciones: f.opciones,
               label: f.label,
               placeholder: f.placeholder,
+              id: f.id,
             }))),
         ];
         setSchemaCfg(cfg);
@@ -106,6 +117,7 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
         const mapped: any = data.map((f: any) => ({
           value: String(f.id),
           nombre: f.nombre,
+          flujoRelacionado: f.flujoAsociado,
         }));
         setFlujo(mapped);
       } else {
@@ -188,14 +200,8 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
     const fn = zodResolver(schemaRef.current);
     return fn(values, ctx, opts);
   }, []);
-  const resetForm = () => {
-    form.reset();
-    form.clearErrors();
-  };
   const defaultValues = useMemo(() => {
     if (!schemaCfg) return {};
-    const now = new Date();
-    const pad = (n: number) => n.toString().padStart(2, '0');
     const def: Record<string, any> = {};
     for (const f of schemaCfg.fields) {
       def[f.nombre] = f.tipo == 'Cheque' ? false : '';
@@ -208,8 +214,7 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
     def['ASUNTO'] = '';
     def['REMITENTE'] = '';
     def['SUB-ETAPA ACTUAL'] = '';
-    def['CODIGO'] =
-      `#${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    def['CODIGO'] = '[PENDIENTE]';
     def['FECHA DE ÚLTIMA ETAPA'] = new Date().toISOString();
     return def;
   }, [schemaCfg]);
@@ -230,9 +235,10 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
       filteredSchemaCfg?.fields.map((item) => ({
         label: item.label,
         tipoCampo: item.tipo,
+        nombre: item.nombre,
         valor:
           item.tipo == 'Cheque'
-            ? values[item.nombre]
+            ? values[item.nombre] == true
               ? 'Si'
               : 'No'
             : values[item.nombre],
@@ -251,10 +257,13 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
         'FECHA DE ÚLTIMA ETAPA': values['FECHA DE ÚLTIMA ETAPA'],
         PDF_EXPEDIENTE: values['PDF_EXPEDIENTE'],
         camposAdicionales: camposAdicionales,
+        expedienteRelacionadoId: values['EXPEDIENTE RELACIONADO'],
       };
       response = await New(user?.jwt ?? '', newExpediente);
       if (response.code == '000') {
         setOnPrint(true);
+        values['CODIGO'] = response.data.codigo;
+        form.reset(values);
         setAlert({
           type: 'success',
           message: 'Expediente creado correctamente.',
@@ -292,7 +301,10 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
     const mapped = schemaCfg?.fields.filter(
       (item) => Number(item.flujoId) === Number(value),
     );
-    setFilteredSchemaCfg(mapped ? { fields: mapped } : null);
+    const uniqueById = mapped
+      ? Array.from(new Map(mapped.map((f) => [f.id, f])).values())
+      : null;
+    setFilteredSchemaCfg(uniqueById ? { fields: uniqueById } : null);
 
     form.setValue('ESTATUS ACTUAL', valueEtapa, { shouldValidate: true });
     form.setValue('SUB-ETAPA ACTUAL', valueSubEtapa, { shouldValidate: true });
@@ -342,412 +354,497 @@ export default function NewExpediente({ open, setOpen }: AddUsuarioI) {
                   marginBottom: '-25px',
                 }}
               >
-                <div className="flex overflow-y-auto max-h-130">
-                  <div className="basis-1/2 space-y-5  mx-5">
-                    <FormField
-                      control={form.control}
-                      defaultValue={defaultValues['CODIGO']}
-                      name={'CODIGO'}
-                      render={({ field }) => (
-                        <FormItem
-                          className="w-[60%]"
-                          style={{
-                            alignItems: 'cent',
-                          }}
-                        >
-                          <FormControl>
-                            <Input
-                              className="rounded-3xl"
-                              style={{
-                                backgroundColor: '#D9EC6C',
-                                textAlign: 'center',
-                                fontWeight: 'bold',
-                              }}
-                              readOnly={true}
-                              placeholder=""
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={'NOMBRE DE EXPEDIENTE'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            NOMBRE DE EXPEDIENTE
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              className="rounded-3xl"
-                              placeholder="Nombre del expediente..."
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={'ASUNTO'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            ASUNTO DE EXPEDIENTE
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              className="rounded-3xl"
-                              placeholder="Asunto del expediente..."
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={'REMITENTE'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            REMITENTE
-                          </FormLabel>
-                          <FormControl>
-                            <Select
-                              name={'REMITENTE'}
-                              onValueChange={(val) => {
-                                field.onChange(val);
-                              }}
-                              value={field.value}
-                              defaultValue={field.value}
-                            >
-                              <SelectTrigger className="rounded-3xl">
-                                <SelectValue placeholder="Seleccione un Remitente" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {remitente?.map((item) => (
-                                  <SelectItem
-                                    key={item.value}
-                                    value={String(item.value)}
-                                  >
-                                    {item.nombre}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <DatePickerMarn
-                      form={form}
-                      name={'FECHA DE INGRESO'}
-                      label={'FECHA DE INGRESO'}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={'TIPO DE PROCESO'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            TIPO DE PROCESO
-                          </FormLabel>
-                          <FormControl>
-                            <Select
-                              onValueChange={(val) => {
-                                field.onChange(val);
-                                changeFunction(val);
-                              }}
-                              value={field.value}
-                              defaultValue={field.value}
-                            >
-                              <SelectTrigger className="rounded-3xl">
-                                <SelectValue placeholder="Seleccione un Flujo" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {flujo?.map((item) => (
-                                  <SelectItem
-                                    key={item.value}
-                                    value={String(item.value)}
-                                  >
-                                    {item.nombre}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={'ESTATUS ACTUAL'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            ESTATUS ACTUAL
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              className="rounded-3xl"
-                              readOnly={true}
-                              placeholder=""
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={'ASESOR ASIGNADO'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            ASESOR ASIGNADO
-                          </FormLabel>
-                          <FormControl>
-                            <Select
-                              name={'ASESOR ASIGNADO'}
-                              onValueChange={(val) => {
-                                field.onChange(val);
-                              }}
-                              value={field.value}
-                              defaultValue={field.value}
-                            >
-                              <SelectTrigger className="rounded-3xl">
-                                <SelectValue placeholder="Seleccione un Asesor" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {asesor?.map((item) => (
-                                  <SelectItem
-                                    key={item.value}
-                                    value={String(item.value)}
-                                  >
-                                    {item.nombre}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {filteredSchemaCfg?.fields.map((f) => (
-                      <div key={f.nombre}>
-                        {f.tipo == 'Fecha' ? (
-                          <DatePickerMarn
-                            form={form}
-                            name={f.nombre}
-                            label={f.label}
-                          />
-                        ) : (
-                          <FormField
-                            key={f.nombre}
-                            control={form.control}
-                            name={f.nombre}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="color-dark-blue-marn font-bold">
-                                  {f.label}
-                                </FormLabel>
-                                <FormControl>
-                                  {f.tipo === 'Texto' ? (
-                                    <Input
-                                      placeholder={f.placeholder}
-                                      {...field}
-                                    />
-                                  ) : f.tipo === 'Numero' ? (
-                                    <Input
-                                      placeholder={f.placeholder}
-                                      type="number"
-                                      {...field}
-                                    />
-                                  ) : f.tipo === 'Opciones' ? (
-                                    <Select
-                                      onValueChange={(val) => {
-                                        field.onChange(val);
-                                      }}
-                                      value={field.value}
-                                      defaultValue={field.value}
-                                    >
-                                      <SelectTrigger className="rounded-3xl">
-                                        <SelectValue
-                                          placeholder={f.placeholder}
-                                        />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {f.opciones
-                                          ?.split(',')
-                                          .map((op) => op.trim())
-                                          .map((op) => (
-                                            <SelectItem key={op} value={op}>
-                                              {op}
-                                            </SelectItem>
-                                          ))}
-                                      </SelectContent>
-                                    </Select>
-                                  ) : (
-                                    <Checkbox
-                                      checked={!!field.value}
-                                      onCheckedChange={(checked) => {
-                                        field.onChange(checked === true);
-                                      }}
-                                    />
-                                  )}
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="basis-1/2 mx-5 space-y-5">
-                    <div className="flex items-center gap-2 mb-4 ">
-                      <FileImage
-                        fill="#2DA6DC"
-                        color="white"
-                        className="size-7"
-                      />
-                      <Label className="flex items-center gap-2 font-bold text-md color-dark-blue-marn">
-                        Miniatura del Expediente
-                      </Label>
-                    </div>
-                    <PdfUpload
-                      form={form}
-                      name={'PDF_EXPEDIENTE'}
-                      label={''}
-                      height={200}
-                    />
-                    <div className="flex items-center gap-2 mb-4 ">
-                      <Network color="#2DA6DC" className="size-7" />
-                      <Label className="flex items-center gap-2 font-bold text-md color-dark-blue-marn">
-                        Etapa del Expediente
-                      </Label>
-                    </div>
-                    <FormField
-                      control={form.control}
-                      name={'ESTATUS ACTUAL'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            ETAPA ACTUAL
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              className="rounded-3xl"
-                              readOnly={true}
-                              placeholder=""
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={'SUB-ETAPA ACTUAL'}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="color-dark-blue-marn font-bold">
-                            SUB-ETAPA ACTUAL
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              className="rounded-3xl"
-                              readOnly={true}
-                              placeholder=""
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <DatePickerMarn
-                      form={form}
-                      name={'FECHA DE ÚLTIMA ETAPA'}
-                      label={'FECHA DE ÚLTIMA ETAPA'}
-                      readOnly={true}
-                      defaultValue={new Date().toISOString()}
-                      formatStr="d 'de' MMMM 'de' yyyy"
-                    />
-                    <div className="flex justify-end">
-                      {onPrint ? (
-                        <Button
-                          className="rounded-3xl mr-3"
-                          type="button"
-                          style={{ backgroundColor: 'white' }}
-                          onClick={async () => {
-                            const vals = form.getValues();
-                            const doc = (
-                              <CaratulaPDF
-                                codigo={vals['CODIGO'] || ''}
-                                nombreExpediente={
-                                  vals['NOMBRE DE EXPEDIENTE'] || ''
-                                }
-                                fechaIngreso={vals['FECHA DE INGRESO'] || ''}
-                                tipoProceso={
-                                  flujo
-                                    ?.filter(
-                                      (item) =>
-                                        item.value == vals['TIPO DE PROCESO'],
-                                    )
-                                    .map((item) => item.nombre)
-                                    .at(0) || ''
-                                }
-                                logoSrc={'/logos/marn_azul.png'}
+                <div className="flex flex-col overflow-y-auto max-h-130">
+                  <div className="flex">
+                    <div className="basis-1/3 space-y-5  mx-5">
+                      <FormField
+                        control={form.control}
+                        defaultValue={defaultValues['CODIGO']}
+                        name={'CODIGO'}
+                        render={({ field }) => (
+                          <FormItem
+                            className="w-[60%]"
+                            style={{
+                              alignItems: 'cent',
+                            }}
+                          >
+                            <FormControl>
+                              <Input
+                                className="rounded-3xl"
+                                style={{
+                                  backgroundColor: '#D9EC6C',
+                                  textAlign: 'center',
+                                  fontWeight: 'bold',
+                                }}
+                                readOnly={true}
+                                placeholder=""
+                                {...field}
                               />
-                            );
-                            await printReactPdf(doc);
-                          }}
-                        >
-                          <Text className="text-[#192854] font-bold text-md">
-                            {loading ? (
-                              <span className="flex items-center gap-2">
-                                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                                Cargando...
-                              </span>
-                            ) : (
-                              'IMPRIMIR CARÁTULA'
-                            )}
-                          </Text>
-                          <Printer color="#D9EC6C" />
-                        </Button>
-                      ) : (
-                        <Button
-                          className="rounded-3xl"
-                          type="submit"
-                          style={{ backgroundColor: '#2DA6DC' }}
-                        >
-                          <Text className="text-white font-bold text-md">
-                            {loading ? (
-                              <span className="flex items-center gap-2">
-                                <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                                Cargando...
-                              </span>
-                            ) : (
-                              'GUARDAR EXPEDIENTE'
-                            )}
-                          </Text>
-                        </Button>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={'NOMBRE DE EXPEDIENTE'}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              NOMBRE DE EXPEDIENTE
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                className="rounded-3xl"
+                                readOnly={onPrint}
+                                placeholder="Nombre del expediente..."
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={'ASUNTO'}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              ASUNTO DE EXPEDIENTE
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                readOnly={onPrint}
+                                className="rounded-3xl"
+                                placeholder="Asunto del expediente..."
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={'REMITENTE'}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              REMITENTE
+                            </FormLabel>
+                            <FormControl>
+                              <Select
+                                name={'REMITENTE'}
+                                onValueChange={(val) => {
+                                  field.onChange(val);
+                                }}
+                                disabled={onPrint}
+                                value={field.value}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger className="rounded-3xl">
+                                  <SelectValue placeholder="Seleccione un Remitente" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {remitente?.map((item) => (
+                                    <SelectItem
+                                      key={item.value}
+                                      value={String(item.value)}
+                                    >
+                                      {item.nombre}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <DatePickerMarn
+                        form={form}
+                        name={'FECHA DE INGRESO'}
+                        label={'FECHA DE INGRESO'}
+                        readOnly={onPrint}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={'TIPO DE PROCESO'}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              TIPO DE PROCESO
+                            </FormLabel>
+                            <FormControl>
+                              <Select
+                                disabled={onPrint}
+                                onValueChange={(val) => {
+                                  field.onChange(val);
+                                  changeFunction(val);
+                                }}
+                                value={field.value}
+                                defaultValue={field.value}
+                              >
+                                <SelectTrigger className="rounded-3xl">
+                                  <SelectValue placeholder="Seleccione un Flujo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {flujo?.map((item) => (
+                                    <SelectItem
+                                      key={item.value}
+                                      value={String(item.value)}
+                                    >
+                                      {item.nombre}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={'ESTATUS ACTUAL'}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              ESTATUS ACTUAL
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                className="rounded-3xl"
+                                readOnly={true}
+                                placeholder=""
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {flujo
+                        ?.filter(
+                          (item) => item.value == form.watch('TIPO DE PROCESO'),
+                        )
+                        .at(0)?.flujoRelacionado == true && (
+                        <FormField
+                          control={form.control}
+                          name={'EXPEDIENTE RELACIONADO'}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="color-dark-blue-marn font-bold">
+                                EXPEDIENTE RELACIONADO
+                              </FormLabel>
+                              <FormControl>
+                                <Select
+                                  name={'EXPEDIENTE RELACIONADO'}
+                                  onValueChange={(val) => {
+                                    field.onChange(val);
+                                  }}
+                                  disabled={onPrint}
+                                  value={field.value}
+                                  defaultValue={field.value}
+                                >
+                                  <SelectTrigger className="rounded-3xl">
+                                    <SelectValue placeholder="Seleccione un Expediente" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem key={'empty'} value="0">
+                                      [SIN EXPEDIENTE RELACIONADO]
+                                    </SelectItem>
+                                    {expedientes?.map((item) => (
+                                      <SelectItem
+                                        key={item.id}
+                                        value={String(item.id)}
+                                      >
+                                        {item.codigo}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       )}
+
+                      <FormField
+                        control={form.control}
+                        name={'ASESOR ASIGNADO'}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              ASESOR ASIGNADO
+                            </FormLabel>
+                            <FormControl>
+                              <Select
+                                name={'ASESOR ASIGNADO'}
+                                onValueChange={(val) => {
+                                  field.onChange(val);
+                                }}
+                                value={field.value}
+                                defaultValue={field.value}
+                                disabled={onPrint}
+                              >
+                                <SelectTrigger className="rounded-3xl">
+                                  <SelectValue placeholder="Seleccione un Asesor" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {asesor?.map((item) => (
+                                    <SelectItem
+                                      key={item.value}
+                                      value={String(item.value)}
+                                    >
+                                      {item.nombre}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="basis-1/3 mx-5 space-y-5">
+                      <div className="flex items-center gap-2 mb-4 ">
+                        <FileImage
+                          fill="#2DA6DC"
+                          color="white"
+                          className="size-7"
+                        />
+                        <Label className="flex items-center gap-2 font-bold text-md color-dark-blue-marn">
+                          Miniatura del Expediente
+                        </Label>
+                      </div>
+                      <PdfUpload
+                        form={form}
+                        name={'PDF_EXPEDIENTE'}
+                        label={''}
+                        height={200}
+                      />
+                      <div className="flex items-center gap-2 mb-4 ">
+                        <Network color="#2DA6DC" className="size-7" />
+                        <Label className="flex items-center gap-2 font-bold text-md color-dark-blue-marn">
+                          Etapa del Expediente
+                        </Label>
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name={'ESTATUS ACTUAL'}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              ETAPA ACTUAL
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                className="rounded-3xl"
+                                readOnly={true}
+                                placeholder=""
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={'SUB-ETAPA ACTUAL'}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="color-dark-blue-marn font-bold">
+                              SUB-ETAPA ACTUAL
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                className="rounded-3xl"
+                                readOnly={true}
+                                placeholder=""
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <DatePickerMarn
+                        form={form}
+                        name={'FECHA DE ÚLTIMA ETAPA'}
+                        label={'FECHA DE ÚLTIMA ETAPA'}
+                        readOnly={true}
+                        defaultValue={new Date().toISOString()}
+                        formatStr="d 'de' MMMM 'de' yyyy"
+                      />
+                    </div>
+                    <div className="basis-1/3 mx-5 space-y-5">
+                      <div className="flex items-center gap-2 mb-4 ">
+                        <ListCheck
+                          fill="white"
+                          color="#2DA6DC"
+                          className="size-7"
+                        />
+                        <Label className="flex items-center gap-2 font-bold text-md color-dark-blue-marn">
+                          Información del Expediente
+                        </Label>
+                      </div>
+
+                      {filteredSchemaCfg?.fields.map((f) => (
+                        <div key={f.nombre}>
+                          {f.tipo == 'Fecha' ? (
+                            <DatePickerMarn
+                              form={form}
+                              name={f.nombre}
+                              label={f.label}
+                              requerido={f.requerido}
+                              readOnly={onPrint}
+                            />
+                          ) : (
+                            <FormField
+                              key={f.nombre}
+                              control={form.control}
+                              name={f.nombre}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="color-dark-blue-marn font-bold">
+                                    {f.label}
+                                    <Label style={{ color: 'red' }}>
+                                      {f.requerido ? '*' : ''}
+                                    </Label>
+                                  </FormLabel>
+                                  <FormControl>
+                                    {f.tipo === 'Texto' ? (
+                                      <Input
+                                        className="rounded-3xl"
+                                        placeholder={f.placeholder}
+                                        {...field}
+                                        readOnly={onPrint}
+                                      />
+                                    ) : f.tipo === 'Numero' ? (
+                                      <Input
+                                        placeholder={f.placeholder}
+                                        type="number"
+                                        readOnly={onPrint}
+                                        {...field}
+                                      />
+                                    ) : f.tipo === 'Memo' ? (
+                                      <Textarea
+                                        placeholder={f.placeholder}
+                                        readOnly={onPrint}
+                                        {...field}
+                                      />
+                                    ) : f.tipo === 'Opciones' ? (
+                                      <Select
+                                        onValueChange={(val) => {
+                                          field.onChange(val);
+                                        }}
+                                        disabled={onPrint}
+                                        value={field.value}
+                                        defaultValue={field.value}
+                                      >
+                                        <SelectTrigger className="rounded-3xl">
+                                          <SelectValue
+                                            placeholder={f.placeholder}
+                                          />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {f.opciones
+                                            ?.split(',')
+                                            .map((op) => op.trim())
+                                            .sort((a, b) => a.localeCompare(b))
+                                            .map((op) => (
+                                              <SelectItem key={op} value={op}>
+                                                {op}
+                                              </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                      </Select>
+                                    ) : (
+                                      <Checkbox
+                                        checked={!!field.value}
+                                        disabled={onPrint}
+                                        onCheckedChange={(checked) => {
+                                          field.onChange(checked === true);
+                                        }}
+                                      />
+                                    )}
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
+                </div>
+                <div className="flex mt-10 w-full items-center justify-end">
+                  {onPrint ? (
+                    <Button
+                      className="rounded-3xl mr-3"
+                      type="button"
+                      style={{ backgroundColor: 'white' }}
+                      onClick={async () => {
+                        const vals = form.getValues();
+                        const doc = (
+                          <CaratulaPDF
+                            codigo={vals['CODIGO'] || ''}
+                            nombreExpediente={
+                              vals['NOMBRE DE EXPEDIENTE'] || ''
+                            }
+                            fechaIngreso={vals['FECHA DE INGRESO'] || ''}
+                            tipoProceso={
+                              flujo
+                                ?.filter(
+                                  (item) =>
+                                    item.value == vals['TIPO DE PROCESO'],
+                                )
+                                .map((item) => item.nombre)
+                                .at(0) || ''
+                            }
+                            logoSrc={'/logos/marn_azul.png'}
+                          />
+                        );
+                        await printReactPdf(doc);
+                      }}
+                    >
+                      <Text className="text-[#192854] font-bold text-md">
+                        {loading ? (
+                          <span className="flex items-center gap-2">
+                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                            Cargando...
+                          </span>
+                        ) : (
+                          'IMPRIMIR CARÁTULA'
+                        )}
+                      </Text>
+                      <Printer color="#D9EC6C" />
+                    </Button>
+                  ) : (
+                    <Button
+                      className="rounded-3xl"
+                      type="submit"
+                      style={{ backgroundColor: '#2DA6DC' }}
+                    >
+                      <Text className="text-white font-bold text-md">
+                        {loading ? (
+                          <span className="flex items-center gap-2">
+                            <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                            Cargando...
+                          </span>
+                        ) : (
+                          'GUARDAR EXPEDIENTE'
+                        )}
+                      </Text>
+                    </Button>
+                  )}
                 </div>
               </div>
             </DialogBody>

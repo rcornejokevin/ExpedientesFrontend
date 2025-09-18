@@ -11,6 +11,7 @@ export const getNewSchema = () => {
     label: z.string().min(1, { message: 'El label del campo es requerido' }),
     opciones: z.string().optional(),
     requerido: z.boolean().optional(),
+    editable: z.boolean().optional(),
   });
 };
 

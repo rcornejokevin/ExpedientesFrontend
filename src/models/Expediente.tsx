@@ -14,6 +14,7 @@ export interface ItemExpediente {
   REMITENTE: string;
   ASUNTO: string;
   PDF_EXPEDIENTE?: any;
+  expedienteRelacionadoId?: string;
 }
 export interface ListaOrden {
   id?: string;
@@ -24,7 +25,7 @@ export interface CampoConValor {
   valor?: string;
   label: string;
 }
-interface ExpedienteListFilters {
+export interface ExpedienteListFilters {
   limit?: number;
   fechaInicioIngreso?: string;
   fechaFinIngreso?: string;
@@ -112,13 +113,24 @@ const New = async (jwt: string, obj: ItemExpediente) => {
     asunto: obj['ASUNTO'],
     archivo: obj.PDF_EXPEDIENTE ? await fileToBase64(obj.PDF_EXPEDIENTE) : '',
     campos: JSON.stringify(obj.camposAdicionales) || '',
+    expedienteRelacionadoId: obj['expedienteRelacionadoId'],
   };
   try {
     const response: any = await sendPost(newObj, 'cases/add', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;
@@ -142,9 +154,19 @@ const Edit = async (jwt: string, obj: any) => {
     };
     const response: any = await sendPut(objToSend, 'cases/edit', true, jwt);
     if (response.code === '400' && response.data != null) {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;
@@ -165,9 +187,19 @@ const ChangeStatus = async (jwt: string, id: number, status: string) => {
       jwt,
     );
     if (response.code === '400' && response.data != null) {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;

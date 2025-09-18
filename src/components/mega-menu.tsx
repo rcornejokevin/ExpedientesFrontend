@@ -40,7 +40,6 @@ export function MegaMenu() {
   return (
     <NavigationMenu>
       <NavigationMenuList className="gap-7.5">
-        {/* Home Item */}
         <NavigationMenuItem>
           <NavigationMenuLink asChild>
             <Link
@@ -60,27 +59,29 @@ export function MegaMenu() {
             </Link>
           </NavigationMenuLink>
         </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuLink asChild>
-            <Link
-              to={publicProfilesItem.path || '/'}
-              className={cn(linkClass)}
-              data-active={isActive(publicProfilesItem.path) || undefined}
-            >
-              {publicProfilesItem.icon && (
-                <publicProfilesItem.icon
-                  className="size-4"
-                  color="#192854"
-                  fill="#18CED7"
-                />
-              )}
-              &nbsp;
-              {publicProfilesItem.title}
-            </Link>
-          </NavigationMenuLink>
-        </NavigationMenuItem>
+        {user?.perfil != 'IT' && (
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild>
+              <Link
+                to={publicProfilesItem.path || '/'}
+                className={cn(linkClass)}
+                data-active={isActive(publicProfilesItem.path) || undefined}
+              >
+                {publicProfilesItem.icon && (
+                  <publicProfilesItem.icon
+                    className="size-4"
+                    color="#192854"
+                    fill="#18CED7"
+                  />
+                )}
+                &nbsp;
+                {publicProfilesItem.title}
+              </Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        )}
 
-        {user?.perfil == 'Administrador' && (
+        {(user?.perfil == 'Administrador' || user?.perfil == 'IT') && (
           <NavigationMenuItem>
             <NavigationMenuTrigger
               className={cn(linkClass2)}

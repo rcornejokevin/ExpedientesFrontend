@@ -2,8 +2,13 @@ import { sendDelete, sendGet, sendPost, sendPut } from '@/lib/apiRequest';
 
 export interface ItemFlujo {
   id?: string;
+  correlativo: string;
   nombre: string;
   ayuda?: string;
+  CierreArchivado?: boolean;
+  CierreDevolucionAlRemitente?: boolean;
+  CierreEnviadoAJudicial?: boolean;
+  flujoAsociado?: boolean;
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'flujo/list', jwt);
@@ -23,17 +28,23 @@ const GetItemFlujoList = async (jwt: string): Promise<ItemFlujo[]> => {
     throw new Error(response.message);
   }
 };
-const New = async (jwt: string, nombre: string, detalle: string) => {
-  const newObj = {
-    nombre,
-    detalle,
-  };
+const New = async (jwt: string, newObj: any) => {
   try {
     const response: any = await sendPost(newObj, 'flujo/add', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;
@@ -46,13 +57,28 @@ const Edit = async (jwt: string, item: ItemFlujo) => {
     id: item.id,
     nombre: item.nombre,
     detalle: item.ayuda,
+    correlativo: item.correlativo,
+    cierreArchivado: item.CierreArchivado,
+    cierreDevolucionAlRemitente: item.CierreDevolucionAlRemitente,
+    cierreEnviadoAJudicial: item.CierreEnviadoAJudicial,
+    flujoAsociado: item.flujoAsociado,
   };
   try {
     const response: any = await sendPut(newObj, 'flujo/edit', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;

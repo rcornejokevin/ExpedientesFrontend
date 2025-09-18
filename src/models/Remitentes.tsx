@@ -14,10 +14,20 @@ const New = async (jwt: string, obj: Remitente) => {
   };
   try {
     const response: any = await sendPost(newObj, 'remitente/add', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;
@@ -32,10 +42,20 @@ const Edit = async (jwt: string, item: Remitente) => {
   };
   try {
     const response: any = await sendPut(newObj, 'remitente/edit', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;

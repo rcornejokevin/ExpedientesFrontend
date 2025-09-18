@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Label } from './ui/label';
 
 interface iDatePicker {
   form: any;
@@ -24,6 +25,7 @@ interface iDatePicker {
   defaultValue?: string;
   formatStr?: string;
   locale?: Locale;
+  requerido?: boolean;
 }
 const DatePickerMarn = ({
   form,
@@ -33,6 +35,7 @@ const DatePickerMarn = ({
   defaultValue,
   formatStr = "d 'de' MMMM 'de' yyyy",
   locale = es,
+  requerido = false,
 }: iDatePicker) => {
   return (
     <FormField
@@ -46,6 +49,7 @@ const DatePickerMarn = ({
           <FormItem>
             <FormLabel className="color-dark-blue-marn font-bold">
               {label}
+              <Label style={{ color: 'red' }}>{requerido ? '*' : ''}</Label>
             </FormLabel>
             <FormControl>
               {readOnly ? (

@@ -56,7 +56,12 @@ const sendPost = async (
       }
       throw new Error(errorMessage);
     }
-    return await response.json();
+    const dataResponse = await response.json();
+    if (dataResponse.code.toString() == '401') {
+      onUnauthorized?.();
+      throw new Error('Unauthorized');
+    }
+    return dataResponse;
   } catch (error) {
     throw error;
   }
@@ -113,7 +118,12 @@ const sendPut = async (
       }
       throw new Error(errorMessage);
     }
-    return await response.json();
+    const dataResponse = await response.json();
+    if (dataResponse.code.toString() == '401') {
+      onUnauthorized?.();
+      throw new Error('Unauthorized');
+    }
+    return dataResponse;
   } catch (error) {
     throw error;
   }
@@ -165,9 +175,13 @@ const sendGet = async (params: any, method: string, jwt: string) => {
       }
       throw new Error(errorMessage);
     }
-    // success
     try {
-      return await response.json();
+      const dataResponse = await response.json();
+      if (dataResponse.code.toString() == '401') {
+        onUnauthorized?.();
+        throw new Error('Unauthorized');
+      }
+      return dataResponse;
     } catch {
       return null; // GET sin body
     }
@@ -221,7 +235,12 @@ const sendDelete = async (id: number, method: string, jwt: string) => {
       throw new Error(errorMessage);
     }
     try {
-      return await response.json();
+      const dataResponse = await response.json();
+      if (dataResponse.code.toString() == '401') {
+        onUnauthorized?.();
+        throw new Error('Unauthorized');
+      }
+      return dataResponse;
     } catch {
       return null; // DELETE sin body
     }

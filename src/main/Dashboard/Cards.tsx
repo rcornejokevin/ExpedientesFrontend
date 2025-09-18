@@ -23,11 +23,11 @@ const Cards = ({ expedientes, setEditedExpediente }: iCards) => {
             <div className="mt-3 space-y-1.5 text-[12px]">
               <div>
                 <span className="text-[#2DA6DC] uppercase">
-                  FECHA DE ÚLTIMA ETAPA:{' '}
+                  FECHA DE INGRESO:{' '}
                 </span>
                 <span className="text-[#1E2851]/80 font-semibold">
-                  {e.fechaActualizacion
-                    ? new Date(e.fechaActualizacion).toLocaleDateString()
+                  {e.fechaIngreso
+                    ? new Date(e.fechaIngreso).toLocaleDateString()
                     : '-'}
                 </span>
               </div>
@@ -43,6 +43,22 @@ const Cards = ({ expedientes, setEditedExpediente }: iCards) => {
                 <span className="text-[#2DA6DC] uppercase">ESTATUS: </span>
                 <span className="text-[#1E2851]/80 font-semibold">
                   {e.estatus ?? '-'}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#2DA6DC] uppercase">ÚLTIMA ETAPA: </span>
+                <span className="text-[#1E2851]/80 font-semibold">
+                  {e.etapa ?? '-'}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#2DA6DC] uppercase">
+                  FECHA DE ÚLTIMA ETAPA:{' '}
+                </span>
+                <span className="text-[#1E2851]/80 font-semibold">
+                  {e.fechaActualizacion
+                    ? new Date(e.fechaActualizacion).toLocaleDateString()
+                    : '-'}
                 </span>
               </div>
             </div>

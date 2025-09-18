@@ -1,7 +1,13 @@
 // NewSchemaType.ts
 import { z } from 'zod';
 
-export type tipo = 'Fecha' | 'Texto' | 'Numero' | 'Opciones' | 'Cheque';
+export type tipo =
+  | 'Fecha'
+  | 'Texto'
+  | 'Numero'
+  | 'Opciones'
+  | 'Cheque'
+  | 'Memo';
 interface ApiField {
   nombre: string;
   requerido: boolean;
@@ -11,6 +17,8 @@ interface ApiField {
   label: string;
   placeholder?: string;
   opciones?: string;
+  id?: string;
+  editable?: boolean;
 }
 
 export type ApiSchemaConfig = {
@@ -50,6 +58,7 @@ export const getNewSchema = (cfg: ApiSchemaConfig) => {
   shape['ESTATUS ACTUAL'] = z
     .string({ required_error: 'La etapa es requerida' })
     .min(1, 'La etapa es requerida');
+  shape['EXPEDIENTE RELACIONADO'] = z.string().optional();
   shape['SUB-ETAPA ACTUAL'] = z.string().optional();
   shape['ASESOR ASIGNADO'] = z
     .string({ required_error: 'El asesor es requerido' })
@@ -86,7 +95,6 @@ export const getNewSchema = (cfg: ApiSchemaConfig) => {
     shape[f.nombre] = s;
   }
 
-  // Campos de sistema no provenientes de cfg
   shape['FECHA DE ÚLTIMA ETAPA'] = z.string().optional();
 
   return z.object(shape);

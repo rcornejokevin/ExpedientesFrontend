@@ -4,6 +4,7 @@ export interface Usuario {
   id?: string;
   username: string;
   perfil?: string;
+  operativo: boolean;
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'usuario/list', jwt);
@@ -13,13 +14,24 @@ const New = async (jwt: string, obj: Usuario) => {
   const newObj = {
     username: obj.username,
     perfil: obj.perfil,
+    operativo: obj.operativo,
   };
   try {
     const response: any = await sendPost(newObj, 'usuario/add', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;
@@ -32,13 +44,24 @@ const Edit = async (jwt: string, item: Usuario) => {
     id: item.id,
     username: item.username,
     perfil: item.perfil,
+    operativo: item.operativo,
   };
   try {
     const response: any = await sendPut(newObj, 'usuario/edit', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;

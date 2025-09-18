@@ -11,6 +11,7 @@ export interface ItemCampo {
   label: string;
   placeHolder?: string;
   opciones?: string;
+  editable?: boolean;
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'campo/list', jwt);
@@ -25,15 +26,26 @@ const New = async (jwt: string, obj: ItemCampo) => {
     requerido: obj.requerido,
     tipoCampo: obj.tipo,
     label: obj.label,
+    editable: obj.editable,
     placeHolder: obj.placeHolder,
     opciones: obj.tipo == 'Opciones' ? obj.opciones : '',
   };
   try {
     const response: any = await sendPost(newObj, 'campo/add', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;
@@ -51,14 +63,25 @@ const Edit = async (jwt: string, item: ItemCampo) => {
     tipoCampo: item.tipo,
     label: item.label,
     placeHolder: item.placeHolder,
+    editable: item.editable,
     opciones: item.tipo == 'Opciones' ? item.opciones : '',
   };
   try {
     const response: any = await sendPut(newObj, 'campo/edit', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;
@@ -69,10 +92,20 @@ const Edit = async (jwt: string, item: ItemCampo) => {
 const Orden = async (jwt: string, orden: any) => {
   try {
     const response: any = await sendPut(orden, 'campo/orden', true, jwt);
-    if (response.code === '400') {
-      const errorsString = Object.entries(response.data)
-        .map(([field, messages]) => ` ${(messages as string[]).join(', ')}`)
-        .join(' | ');
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
       response.message += `: ${errorsString}`;
     }
     return response;

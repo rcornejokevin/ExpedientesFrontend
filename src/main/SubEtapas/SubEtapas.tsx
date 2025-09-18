@@ -71,6 +71,7 @@ export default function SubEtapas() {
             nombre: f.nombre,
             ayuda: f.detalle ?? '',
             etapa: String(f.etapaId ?? ''),
+            orden: f.orden,
           }));
         setItems(mapped);
       } else {
@@ -82,7 +83,12 @@ export default function SubEtapas() {
   // Memoized selected flujo and filtered etapas
 
   const resetForm = () => {
-    form.reset({ nombre: '', ayuda: '', flujo: '', etapa: '' });
+    form.reset({
+      nombre: '',
+      ayuda: '',
+      etapa: selectedEtapa,
+      flujo: selectedFlujo,
+    });
     form.clearErrors();
   };
   const deleteItem = (item: ItemSubEtapa) => {
@@ -127,6 +133,7 @@ export default function SubEtapas() {
         itemEditted.nombre = values.nombre;
         itemEditted.ayuda = values.ayuda;
         itemEditted.etapa = values.etapa;
+        itemEditted.orden = itemToEdit.orden;
         response = await EditSubEtapa(user?.jwt ?? '', itemEditted);
       }
       if (response.code == '000') {
@@ -142,8 +149,9 @@ export default function SubEtapas() {
             message: 'Sub Etapa editada correctamente.',
           });
         }
-        setItemToEdit(undefined);
         resetForm();
+        setItemToEdit(undefined);
+        setItemToDelete(undefined);
       } else {
         setAlert({ type: 'error', message: response.message });
       }
@@ -199,7 +207,7 @@ export default function SubEtapas() {
                 }
               }}
             />
-            <div className="grid grid-rows-[auto,1fr] h-[70vh]">
+            <div className="grid grid-rows-[auto,1fr] h-[50vh]">
               <div>
                 <div className="flex items-center gap-2 mb-4 ">
                   <AlignRight color="#18CED7" className="size-20" />

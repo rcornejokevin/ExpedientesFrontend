@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
-import { GetList } from '@/models/Expediente';
+import { ExpedienteListFilters, GetList } from '@/models/Expediente';
 import {
-  Filter,
   FolderOpen,
   Plus,
   Search,
@@ -29,7 +28,10 @@ const Dashboard = () => {
   const [expedientesFiltered, setExpedientesFiltered] = useState<any[]>([]);
   useEffect(() => {
     const fetchData = async () => {
-      const response = await GetList(user?.jwt ?? '');
+      const filters: ExpedienteListFilters = {
+        estatus: 'Abierto,Cerrado',
+      };
+      const response = await GetList(user?.jwt ?? '', filters);
       if (response.code === '000') {
         const data = response.data.map((item: any) => ({
           nombre: item.nombre,
@@ -58,7 +60,7 @@ const Dashboard = () => {
   };
   return (
     <>
-      <NewExpediente open={open} setOpen={setOpen} />
+      <NewExpediente open={open} setOpen={setOpen} expedientes={expedientes} />
       {expedienteSelected && (
         <EditExpediente
           open={openEdited}
@@ -111,12 +113,6 @@ const Dashboard = () => {
                       </button>
                     )}
                   </div>
-                  {/*<div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-[#D7ED1E]" />
-                    <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#1E2851]/70">
-                      Filtrar
-                    </span>
-                  </div>*/}
                   <div className="relative w-60 md:w-72">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D7ED1E]" />
                     <input

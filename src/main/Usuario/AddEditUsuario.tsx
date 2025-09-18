@@ -10,6 +10,7 @@ import { Key, LoaderCircleIcon, LucideUser } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Alerts, { useFlash } from '@/lib/alerts';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogBody,
@@ -74,12 +75,14 @@ export default function AddEditUsuario({
         const newUser: Usuario = {
           username: values.username,
           perfil: values.perfil,
+          operativo: values.operativo,
         };
         response = await NewUsuario(user?.jwt ?? '', newUser);
       } else if (usuario != undefined) {
         const itemEditted: Usuario = usuario;
         itemEditted.username = values.username;
         itemEditted.perfil = values.perfil;
+        itemEditted.operativo = values.operativo;
         response = await EditUsuario(user?.jwt ?? '', itemEditted);
       }
       if (response.code == '000') {
@@ -95,6 +98,7 @@ export default function AddEditUsuario({
           });
         }
         resetForm();
+        setOpen(false);
       } else {
         setAlert({ type: 'error', message: response.message });
       }
@@ -109,6 +113,7 @@ export default function AddEditUsuario({
       form.reset({
         username: usuario.username,
         perfil: usuario.perfil,
+        operativo: usuario.operativo,
       });
       form.clearErrors();
     }
@@ -167,10 +172,34 @@ export default function AddEditUsuario({
                               <SelectItem value={'Administrador'}>
                                 Administrador
                               </SelectItem>
-                              <SelectItem value={'Usuario'}>Usuario</SelectItem>
+                              <SelectItem value={'IT'}>IT</SelectItem>
+                              <SelectItem value={'Asesor'}>Asesor</SelectItem>
+                              <SelectItem value={'Recepción'}>
+                                Recepción
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </InputGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="operativo" // debe ser boolean en tu schema
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="color-dark-blue-marn font-bold">
+                        OPERATIVO
+                      </FormLabel>
+                      <FormControl>
+                        <Checkbox
+                          checked={!!field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked === true);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

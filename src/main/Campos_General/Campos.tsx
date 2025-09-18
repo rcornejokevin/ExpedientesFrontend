@@ -56,6 +56,7 @@ export default function CamposGeneral() {
       placeholder: '',
       requerido: false,
       opciones: '',
+      editable: false,
     },
   });
   const [items, setItems] = useState<ItemCampo[]>(initialItems);
@@ -89,6 +90,7 @@ export default function CamposGeneral() {
             label: f.label,
             placeHolder: f.placeholder,
             opciones: f.opciones,
+            editable: f.editable,
           }));
         setItems(mapped);
       } else {
@@ -107,15 +109,17 @@ export default function CamposGeneral() {
         label: '',
         placeholder: '',
         opciones: '',
+        editable: false,
       });
       form.clearErrors();
       return;
     }
     form.reset({
       nombre: '',
-      flujo: '',
+      flujo: form.getValues('flujo'),
       tipo: '',
       requerido: false,
+      editable: false,
       label: '',
       placeholder: '',
       opciones: '',
@@ -147,6 +151,7 @@ export default function CamposGeneral() {
       label: item.label ?? '',
       placeholder: item.placeHolder ?? '',
       opciones: item.opciones ?? '',
+      editable: item.editable,
     });
     form.clearErrors();
   };
@@ -164,6 +169,7 @@ export default function CamposGeneral() {
           label: values.label ?? '',
           placeHolder: values.placeholder ?? '',
           opciones: values.opciones ?? '',
+          editable: values.editable,
         };
         response = await NewCampo(user?.jwt ?? '', itemCampoAdd);
       } else {
@@ -175,6 +181,7 @@ export default function CamposGeneral() {
         itemEditted.label = values.label ?? '';
         itemEditted.placeHolder = values.placeholder ?? '';
         itemEditted.opciones = values.opciones ?? '';
+        itemEditted.editable = values.editable;
         response = await EditCampo(user?.jwt ?? '', itemEditted);
       }
       if (response.code == '000') {
@@ -430,26 +437,48 @@ export default function CamposGeneral() {
                           ) : (
                             <></>
                           )}
-                          <FormField
-                            control={form.control}
-                            name="requerido" // debe ser boolean en tu schema
-                            render={({ field }) => (
-                              <FormItem className="space-y-2">
-                                <FormLabel className="color-dark-blue-marn font-bold">
-                                  REQUERIDO
-                                </FormLabel>
-                                <FormControl>
-                                  <Checkbox
-                                    checked={!!field.value}
-                                    onCheckedChange={(checked) => {
-                                      field.onChange(checked === true);
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          <div className="flex flex-row gap-10">
+                            <FormField
+                              control={form.control}
+                              name="requerido" // debe ser boolean en tu schema
+                              render={({ field }) => (
+                                <FormItem className="space-y-2">
+                                  <FormLabel className="color-dark-blue-marn font-bold">
+                                    REQUERIDO
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={!!field.value}
+                                      onCheckedChange={(checked) => {
+                                        field.onChange(checked === true);
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="editable" // debe ser boolean en tu schema
+                              render={({ field }) => (
+                                <FormItem className="space-y-2">
+                                  <FormLabel className="color-dark-blue-marn font-bold">
+                                    EDITABLE
+                                  </FormLabel>
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={!!field.value}
+                                      onCheckedChange={(checked) => {
+                                        field.onChange(checked === true);
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                           <div className="flex justify-end">
                             <button
                               type="submit"
