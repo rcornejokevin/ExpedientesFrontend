@@ -2,11 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { GetList as GetListCampo } from '@/models/Campos';
 import { ChangeStatus, Edit, GetFile } from '@/models/Expediente';
+import { GetList as GetListRemitente } from '@/models/Remitentes';
 import CaratulaPDF from '@/pdf/CaratulaPDF';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FileImage, LoaderCircleIcon, Network, Printer } from 'lucide-react';
+import {
+  FileImage,
+  ListCheck,
+  LoaderCircleIcon,
+  Network,
+  Printer,
+} from 'lucide-react';
 import { Text } from 'react-aria-components';
 import { useForm } from 'react-hook-form';
 import { useLoading } from '@/providers/loading-provider';
@@ -34,6 +41,7 @@ import DatePickerMarn from '@/components/datePicker';
 import PdfUpload from '@/components/pdf-upload';
 import { printReactPdf } from '@/components/printPdf';
 import { getEditSchema } from './EditSchemaType';
+import { Field } from './Field';
 import { ApiSchemaConfig } from './NewSchemaType';
 
 interface iEditExpedienteForm {
@@ -44,6 +52,14 @@ interface iEditExpedienteForm {
   setAlert: any;
   setOpen: any;
   extraFields: any[];
+  expedientes: any[];
+}
+interface ItemSelect {
+  nombre: string;
+  value: string;
+  padre?: string;
+  orden?: number;
+  flujoRelacionado?: boolean;
 }
 const EditExpedienteForm = ({
   etapa,
@@ -53,6 +69,7 @@ const EditExpedienteForm = ({
   setAlert,
   setOpen,
   extraFields,
+  expedientes,
 }: iEditExpedienteForm) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
@@ -61,7 +78,7 @@ const EditExpedienteForm = ({
   const [schemaCfg, setSchemaCfg] = useState<ApiSchemaConfig | null>();
   const schema = getEditSchema(schemaCfg ?? { fields: [] });
   const schemaRef = useRef<any>(schema);
-  // Mantiene el resolver sincronizado con el schema dinámico generado
+  const [remitente, setRemitente] = useState<ItemSelect[]>();
   useEffect(() => {
     schemaRef.current = schema;
   }, [schema]);
@@ -118,6 +135,12 @@ const EditExpedienteForm = ({
     def['etapa'] = expediente.etapaId != null ? String(expediente.etapaId) : '';
     def['aniadirArchivo'] = false;
     def['PDF_EXPEDIENTE'] = null;
+    def['ASUNTO'] = expediente.asunto;
+    def['REMITENTE'] =
+      expediente.remitenteId != null ? String(expediente.remitenteId) : '';
+    def['FECHA DE INGRESO'] = expediente.fechaIngreso;
+    def['EXPEDIENTE RELACIONADO'] = expediente.expedienteRelacionadoId;
+    def['NOMBRE DE EXPEDIENTE'] = expediente.nombre;
     return def;
   }, [schemaCfg, expediente]);
   const form = useForm<Record<string, any>>({
@@ -203,6 +226,24 @@ const EditExpedienteForm = ({
       archivo: values.PDF_EXPEDIENTE,
       asesor: values.asesor,
       campos: JSON.stringify(camposAdicionales),
+      asunto:
+        user?.perfil == 'ADMINISTRADOR' ? values.ASUNTO : expediente.asunto,
+      nombre:
+        user?.perfil == 'ADMINISTRADOR'
+          ? values['NOMBRE DE EXPEDIENTE']
+          : expediente.nombre,
+      remitenteId:
+        user?.perfil == 'ADMINISTRADOR'
+          ? Number.parseInt(values['REMITENTE'])
+          : Number.parseInt(expediente.remitenteId),
+      fechaIngreso:
+        user?.perfil == 'ADMINISTRADOR'
+          ? values['FECHA DE INGRESO']
+          : expediente.fechaIngreso,
+      expedienteRelacionadoId:
+        user?.perfil == 'ADMINISTRADOR'
+          ? Number.parseInt(values['EXPEDIENTE RELACIONADO'])
+          : Number.parseInt(expediente.expedienteRelacionadoId),
     };
     setLoading(true);
 
@@ -272,6 +313,19 @@ const EditExpedienteForm = ({
     }
   };
   useEffect(() => {
+    const fetchDataRemitente = async () => {
+      const response = await GetListRemitente(user?.jwt ?? '');
+      if (response.code === '000') {
+        const data = response.data;
+        const mapped: any = data.map((f: any) => ({
+          value: String(f.id),
+          nombre: f.descripcion,
+        }));
+        setRemitente(mapped);
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    };
     const fetchData = async () => {
       const response = await GetListCampo(user?.jwt ?? '');
       if (response.code === '000') {
@@ -315,6 +369,7 @@ const EditExpedienteForm = ({
     setLoadingComplete(false);
     setLoading(false);
     fetchData();
+    fetchDataRemitente();
   }, [expediente]);
 
   return (
@@ -342,68 +397,127 @@ const EditExpedienteForm = ({
                   }}
                   readOnly={true}
                 />
-                <FormItem>
-                  <FormLabel className="color-dark-blue-marn font-bold">
-                    NOMBRE DE EXPEDIENTE
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      value={expediente.nombre}
-                      className="rounded-3xl"
-                      placeholder="Nombre del expediente..."
-                      readOnly={true}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-                <FormItem>
-                  <FormLabel className="color-dark-blue-marn font-bold">
-                    ASUNTO
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      value={expediente.asunto}
-                      className="rounded-3xl"
-                      placeholder="Nombre del expediente..."
-                      readOnly={true}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-                <FormItem>
-                  <FormLabel className="color-dark-blue-marn font-bold">
-                    REMITENTE
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      value={expediente.remitente}
-                      className="rounded-3xl"
-                      placeholder="Nombre del expediente..."
-                      readOnly={true}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-                <FormItem>
-                  <FormLabel className="color-dark-blue-marn font-bold">
-                    FECHA DE INGRESO
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      value={format(
-                        new Date(expediente.fechaIngreso),
-                        formatStr,
-                        {
-                          locale,
-                        },
-                      )}
-                      className="rounded-3xl"
-                      placeholder="Fecha de ingreso"
-                      readOnly={true}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <FormField
+                  control={form.control}
+                  name={'NOMBRE DE EXPEDIENTE'}
+                  disabled={user?.perfil !== 'ADMINISTRADOR'}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="color-dark-blue-marn font-bold">
+                        NOMBRE DE EXPEDIENTE
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          className="rounded-3xl"
+                          placeholder="Nombre del expediente..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={'ASUNTO'}
+                  disabled={user?.perfil !== 'ADMINISTRADOR'}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="color-dark-blue-marn font-bold">
+                        ASUNTO DE EXPEDIENTE
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          className="rounded-3xl"
+                          placeholder="Asunto del expediente..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {user?.perfil != 'ADMINISTRADOR' ? (
+                  <FormItem>
+                    <FormLabel className="color-dark-blue-marn font-bold">
+                      REMITENTE
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        value={expediente.remitente}
+                        className="rounded-3xl"
+                        placeholder="Nombre del expediente..."
+                        readOnly={true}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name={'REMITENTE'}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="color-dark-blue-marn font-bold">
+                          REMITENTE
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            name={'REMITENTE'}
+                            onValueChange={(val) => {
+                              field.onChange(val);
+                            }}
+                            value={field.value}
+                          >
+                            <SelectTrigger className="rounded-3xl">
+                              <SelectValue placeholder="Seleccione un Remitente" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {remitente?.map((item) => (
+                                <SelectItem
+                                  key={item.value}
+                                  value={String(item.value)}
+                                >
+                                  {item.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+                {user?.perfil == 'ADMINISTRADOR' ? (
+                  <DatePickerMarn
+                    form={form}
+                    name={'FECHA DE INGRESO'}
+                    label={'FECHA DE INGRESO'}
+                  />
+                ) : (
+                  <FormItem>
+                    <FormLabel className="color-dark-blue-marn font-bold">
+                      FECHA DE INGRESO
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        value={format(
+                          new Date(expediente.fechaIngreso),
+                          formatStr,
+                          {
+                            locale,
+                          },
+                        )}
+                        className="rounded-3xl"
+                        placeholder="Fecha de ingreso"
+                        readOnly={true}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+
                 <FormItem>
                   <FormLabel className="color-dark-blue-marn font-bold">
                     TIPO DE PROCESO
@@ -432,20 +546,30 @@ const EditExpedienteForm = ({
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-                {expediente.expedienteRelacionado != '' && (
-                  <FormItem>
-                    <FormLabel className="color-dark-blue-marn font-bold">
-                      EXPEDIENTE RELACIONADO
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="rounded-3xl"
-                        readOnly={true}
-                        value={expediente.expedienteRelacionado}
+                {expediente.puedeRelacionarse != '' && (
+                  <>
+                    {user?.perfil == 'ADMINISTRADOR' ? (
+                      <Field
+                        expedientes={expedientes}
+                        expediente={expediente}
+                        form={form}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    ) : (
+                      <FormItem>
+                        <FormLabel className="color-dark-blue-marn font-bold">
+                          EXPEDIENTE RELACIONADO
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            className="rounded-3xl"
+                            readOnly={true}
+                            value={expediente.expedienteRelacionado}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  </>
                 )}
 
                 <FormItem>
@@ -543,7 +667,10 @@ const EditExpedienteForm = ({
                       </FormLabel>
                       <FormControl>
                         <Select
-                          disabled={expediente.estatus != 'Abierto'}
+                          disabled={
+                            expediente.estatus != 'Abierto' ||
+                            user?.perfil == 'RECEPCIÓN'
+                          }
                           name={'etapa'}
                           onValueChange={(val) => {
                             field.onChange(val);
@@ -593,7 +720,10 @@ const EditExpedienteForm = ({
                       <FormControl>
                         {(subEtapaFiltered?.length ?? 0 > 0) ? (
                           <Select
-                            disabled={expediente.estatus != 'Abierto'}
+                            disabled={
+                              expediente.estatus != 'Abierto' ||
+                              user?.perfil == 'RECEPCIÓN'
+                            }
                             name={'subEtapa'}
                             onValueChange={(val) => {
                               field.onChange(val);
@@ -639,7 +769,10 @@ const EditExpedienteForm = ({
                       <FormControl>
                         <Select
                           name={'asesor'}
-                          disabled={expediente.estatus != 'Abierto'}
+                          disabled={
+                            expediente.estatus != 'Abierto' ||
+                            user?.perfil == 'ASESOR'
+                          }
                           onValueChange={(val) => {
                             field.onChange(val);
                           }}
@@ -678,6 +811,12 @@ const EditExpedienteForm = ({
                 />
               </div>
               <div className="basis-1/3 space-y-5  mx-5">
+                <div className="flex items-center gap-2 mb-4 ">
+                  <ListCheck fill="white" color="#2DA6DC" className="size-7" />
+                  <Label className="flex items-center gap-2 font-bold text-md color-dark-blue-marn">
+                    Información del Expediente
+                  </Label>
+                </div>
                 {schemaCfg?.fields.map((f) => (
                   <div key={f.nombre}>
                     {f.tipo == 'Fecha' ? (
@@ -811,7 +950,9 @@ const EditExpedienteForm = ({
           </div>
           <div className="flex mt-10 w-full items-center justify-between">
             <div className="flex justify-start gap-2">
-              {expediente.puedeCerrarse && expediente.estatus == 'Abierto' && (
+              {expediente.puedeCerrarse &&
+              expediente.estatus == 'Abierto' &&
+              user?.perfil != 'RECEPCIÓN' ? (
                 <Button
                   className="rounded-3xl mr-3"
                   type="button"
@@ -831,10 +972,12 @@ const EditExpedienteForm = ({
                     )}
                   </Text>
                 </Button>
+              ) : (
+                <></>
               )}
               {expediente.estatus == 'Cerrado' &&
                 expediente.puedeArchivarse &&
-                user?.perfil == 'Administrador' && (
+                user?.perfil != 'ASESOR' && (
                   <Button
                     className="rounded-3xl"
                     type="button"
@@ -857,7 +1000,7 @@ const EditExpedienteForm = ({
                 )}
               {expediente.estatus == 'Cerrado' &&
                 expediente.puedeDevolverseAlRemitente &&
-                user?.perfil == 'Administrador' && (
+                user?.perfil != 'ASESOR' && (
                   <Button
                     className="rounded-3xl"
                     type="button"
@@ -880,7 +1023,7 @@ const EditExpedienteForm = ({
                 )}
               {expediente.estatus == 'Cerrado' &&
                 expediente.puedeEnviarAJudicial &&
-                user?.perfil == 'Administrador' && (
+                user?.perfil != 'ASESOR' && (
                   <Button
                     className="rounded-3xl"
                     type="button"

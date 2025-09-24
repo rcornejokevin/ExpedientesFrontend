@@ -169,13 +169,13 @@ export default function AddEditUsuario({
                               <SelectValue placeholder="Seleccione el Perfil" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value={'Administrador'}>
-                                Administrador
+                              <SelectItem value={'ADMINISTRADOR'}>
+                                ADMINISTRADOR
                               </SelectItem>
                               <SelectItem value={'IT'}>IT</SelectItem>
-                              <SelectItem value={'Asesor'}>Asesor</SelectItem>
-                              <SelectItem value={'Recepción'}>
-                                Recepción
+                              <SelectItem value={'ASESOR'}>ASESOR</SelectItem>
+                              <SelectItem value={'RECEPCIÓN'}>
+                                RECEPCIÓN
                               </SelectItem>
                             </SelectContent>
                           </Select>

@@ -100,6 +100,7 @@ export default function Detalle({ open, setOpen, idExpediente }: iDetalle) {
                                 ? true
                                 : false,
                             estatus: f.estatus,
+                            asesorNuevo: f.asesorNuevo,
                           }));
                         }
                         const doc = (

@@ -65,6 +65,7 @@ const EditExpedienteDetail = ({
             cargaImagen:
               f.nombreArchivo != '' && f.nombreArchivo != null ? true : false,
             estatus: f.estatus,
+            asesorNuevo: f.asesorNuevo,
           }));
           setDetails(mapped);
         } else {
@@ -162,6 +163,9 @@ const EditExpedienteDetail = ({
                     FECHA DE ETAPA
                   </TableHead>
                   <TableHead className="text-white font-bold text-center">
+                    USUARIO
+                  </TableHead>
+                  <TableHead className="text-white font-bold text-center">
                     CARGA DE IMAGEN
                   </TableHead>
                   <TableHead className="text-white font-bold text-center">
@@ -181,6 +185,7 @@ const EditExpedienteDetail = ({
                     <TableCell align="center">
                       {new Date(detail.fechaEtapa).toLocaleDateString('es-ES')}
                     </TableCell>
+                    <TableCell align="center">{detail.asesorNuevo}</TableCell>
                     <TableCell align="center">
                       {detail.cargaImagen ? (
                         <Badge

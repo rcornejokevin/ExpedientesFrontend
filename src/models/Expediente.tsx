@@ -62,6 +62,34 @@ const GetListDetails = async (jwt: string, id: number) => {
   const response = await sendGet('', `cases/detail/${id}`, jwt);
   return response;
 };
+const GetListNotes = async (jwt: string, id: number) => {
+  const response = await sendGet('', `cases/notes/${id}`, jwt);
+  return response;
+};
+const AddNote = async (jwt: string, obj: any) => {
+  try {
+    const response: any = await sendPost(obj, 'cases/note', true, jwt);
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
+      response.message += `: ${errorsString}`;
+    }
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
 const GetItem = async (jwt: string, id: number) => {
   const response = await sendGet('', `cases/${id}`, jwt);
   return response;
@@ -221,4 +249,6 @@ export {
   GetListDetails,
   Indicators,
   ChangeStatus,
+  GetListNotes,
+  AddNote,
 };

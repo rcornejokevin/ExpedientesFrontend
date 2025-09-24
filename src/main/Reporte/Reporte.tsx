@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { GetList as GetListEtapa } from '@/models/Etapas';
 import { GetList } from '@/models/Expediente';
@@ -48,6 +48,7 @@ const Reporte = () => {
   const [open, setOpen] = useState<boolean>(false);
   const [expedienteSelected, setExpedienteSelected] = useState<any>();
   const [expedientes, setExpedientes] = useState<any[]>([]);
+  const [expedientesFiltered, setExpedientesFiltered] = useState<any[]>([]);
   const [openFilter, setOpenFilter] = useState<boolean>(false);
   const [asesoresOpts, setAsesoresOpts] = useState<
     { value: string; nombre: string }[]
@@ -109,7 +110,7 @@ const Reporte = () => {
     { id: 'numero', desc: true },
   ]);
   const data: IData[] = useMemo(() => {
-    return (expedientes || []).map((item, i) => {
+    return (expedientesFiltered || []).map((item) => {
       return {
         id: item.id,
         identifier: item.id,
@@ -122,7 +123,7 @@ const Reporte = () => {
         proceso: item.flujo ?? '',
       } as IData;
     });
-  }, [expedientes]);
+  }, [expedientesFiltered]);
 
   const handleExportPdf = async () => {
     setGlobalLoading(true);
@@ -432,6 +433,7 @@ const Reporte = () => {
           etapa: item.etapa,
         }));
         setExpedientes(mapped);
+        setExpedientesFiltered(mapped);
       } else {
         setAlert({ type: 'error', message: response.message });
       }
@@ -519,6 +521,7 @@ const Reporte = () => {
           etapa: item.etapa,
         }));
         setExpedientes(mapped);
+        setExpedientesFiltered(mapped);
       } else {
         setAlert({ type: 'error', message: response.message });
       }
@@ -530,6 +533,40 @@ const Reporte = () => {
     setGlobalLoading(true, 'Abriendo expediente...');
     setExpedienteSelected(editedElement);
     setOpen(true);
+  };
+  const searchableFields = [
+    'nombre',
+    'codigo',
+    'estatus',
+    'remitente',
+    'asunto',
+    'etapa',
+    'flujo',
+    'asesor',
+    'etapaDetalle',
+  ];
+
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    const normalizedValue = event.target.value.trim().toLowerCase();
+
+    if (!normalizedValue) {
+      setExpedientesFiltered(expedientes);
+      return;
+    }
+
+    const filtered = expedientes.filter((expediente) =>
+      searchableFields.some((field) => {
+        const fieldValue = expediente[field];
+
+        if (fieldValue == null) {
+          return false;
+        }
+
+        return String(fieldValue).toLowerCase().includes(normalizedValue);
+      }),
+    );
+
+    setExpedientesFiltered(filtered);
   };
   return (
     <>
@@ -586,11 +623,7 @@ const Reporte = () => {
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#D7ED1E]" />
                     <input
                       type="search"
-                      onChange={(e) =>
-                        table
-                          .getColumn('titulo')
-                          ?.setFilterValue(e.target.value)
-                      }
+                      onChange={handleSearch}
                       placeholder="BUSCAR"
                       className="h-9 w-full rounded-full border border-gray-200 pl-9 pr-4 text-[12px] font-bold uppercase tracking-wide placeholder:text-[#1E2851]/50 focus:outline-none focus:ring-0"
                       aria-label="Buscar"

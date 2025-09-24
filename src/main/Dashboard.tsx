@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { ExpedienteListFilters, GetList } from '@/models/Expediente';
 import {
@@ -58,11 +58,47 @@ const Dashboard = () => {
     setExpedienteSelected(editedElement);
     setOpenEdited(true);
   };
+  const searchableFields = [
+    'nombre',
+    'codigo',
+    'estatus',
+    'remitente',
+    'asunto',
+    'etapa',
+    'flujo',
+    'asesor',
+    'etapaDetalle',
+  ];
+
+  const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
+    const normalizedValue = event.target.value.trim().toLowerCase();
+
+    if (!normalizedValue) {
+      setExpedientesFiltered(expedientes);
+      return;
+    }
+
+    const filtered = expedientes.filter((expediente) =>
+      searchableFields.some((field) => {
+        const fieldValue = expediente[field];
+
+        if (fieldValue == null) {
+          return false;
+        }
+
+        return String(fieldValue).toLowerCase().includes(normalizedValue);
+      }),
+    );
+
+    setExpedientesFiltered(filtered);
+  };
+
   return (
     <>
       <NewExpediente open={open} setOpen={setOpen} expedientes={expedientes} />
       {expedienteSelected && (
         <EditExpediente
+          expedientes={expedientes}
           open={openEdited}
           setOpen={setOpenEdited}
           idExpediente={expedienteSelected}
@@ -118,15 +154,7 @@ const Dashboard = () => {
                     <input
                       type="search"
                       placeholder="BUSCAR"
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const filtered = expedientes.filter((expediente) =>
-                          expediente.nombre
-                            .toLowerCase()
-                            .includes(value.toLowerCase()),
-                        );
-                        setExpedientesFiltered(filtered);
-                      }}
+                      onChange={handleSearch}
                       className="h-9 w-full rounded-full border border-gray-200 pl-9 pr-4 text-[12px] font-bold uppercase tracking-wide placeholder:text-[#1E2851]/50 focus:outline-none focus:ring-0"
                       aria-label="Buscar"
                     />
@@ -135,16 +163,18 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="flex">
-              <button
-                className="mx-20 text-white px-4 py-2 rounded-4xl hover:opacity-60"
-                style={{ backgroundColor: '#2DA6DC' }}
-                onClick={() => {
-                  setOpen(true);
-                }}
-              >
-                <Plus className="inline mr-2" />
-                Crear nuevo expediente
-              </button>
+              {user?.perfil != 'ASESOR' && (
+                <button
+                  className="mx-20 text-white px-4 py-2 rounded-4xl hover:opacity-60"
+                  style={{ backgroundColor: '#2DA6DC' }}
+                  onClick={() => {
+                    setOpen(true);
+                  }}
+                >
+                  <Plus className="inline mr-2" />
+                  Crear nuevo expediente
+                </button>
+              )}
             </div>
             <div className="mt-6 px-4 flex-1 min-h-0 flex flex-col">
               {mosaicos ? (

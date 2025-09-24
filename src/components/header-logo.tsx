@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/auth/AuthContext';
 import { Menu } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { toAbsoluteUrl } from '@/lib/helpers';
@@ -13,16 +14,16 @@ const HeaderLogo = ({ isMenuShowed }: any) => {
   const { pathname } = useLocation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const isMobile = useIsMobile();
-
+  const { user } = useAuth();
   // Close sheet when route changes
   useEffect(() => {
     setIsSheetOpen(false);
   }, [pathname]);
 
   return (
-    <div className="flex items-stretch gap-1.5 lg:gap-10 grow">
+    <div className="flex w-full flex-1 items-center gap-1.5 lg:gap-10 ml-3">
       <div className="flex items-center gap-2.5">
-        <Link to="/dashboard">
+        <Link to={user?.perfil == 'IT' ? '/flujos' : '/dashboard'}>
           <img
             src={toAbsoluteUrl('/logos/marn_blanco.png')}
             alt="logo"
@@ -44,31 +45,32 @@ const HeaderLogo = ({ isMenuShowed }: any) => {
           </Label>
         </div>
       </div>
-      {isMenuShowed === true &&
-        (!isMobile ? (
-          <MegaMenu />
-        ) : (
-          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="dim"
-                mode="icon"
-                aria-label="Abrir menú"
-                className="data-[state=open]:text-[var(--color-green-marn)]"
-              >
-                <Menu />
-              </Button>
-            </SheetTrigger>
+      {isMenuShowed === true && (
+        <div className={`flex items-center ${isMobile ? 'ms-auto' : 'ms-6'}`}>
+          {!isMobile ? (
+            <MegaMenu />
+          ) : (
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="dim"
+                  mode="icon"
+                  aria-label="Abrir menú"
+                  className="data-[state=open]:text-[var(--color-green-marn)]"
+                >
+                  <Menu />
+                </Button>
+              </SheetTrigger>
 
-            {/* Nota: SheetContent NO tiene prop 'close'. */}
-            <SheetContent side="left" className="p-0 gap-0 w-[275px]">
-              {/* shadcn/ui no trae <SheetBody>, usa un contenedor normal */}
-              <div className="p-0 flex flex-col grow">
-                <MegaMenuMobile />
-              </div>
-            </SheetContent>
-          </Sheet>
-        ))}
+              <SheetContent side="left" className="w-[275px] gap-0 p-0">
+                <div className="flex grow flex-col p-0">
+                  <MegaMenuMobile />
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
+        </div>
+      )}
     </div>
   );
 };

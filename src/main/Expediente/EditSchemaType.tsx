@@ -1,3 +1,4 @@
+import { useAuth } from '@/auth/AuthContext';
 import { z } from 'zod';
 
 export type tipo =
@@ -24,10 +25,28 @@ export type ApiSchemaConfig = {
 };
 
 export const getEditSchema = (cfg: ApiSchemaConfig) => {
+  const { user } = useAuth();
   let shape: Record<string, any> = {};
   shape['etapa'] = z.string().min(1, { message: 'La etapa es requerida' });
   shape['asesor'] = z.string().min(1, { message: 'El asesor es requerido' });
   shape['subEtapa'] = z.string();
+  if (user?.perfil === 'ADMINISTRADOR') {
+    shape['ASUNTO'] = z
+      .string({ required_error: 'El asunto es requerido' })
+      .min(1, 'El asunto es requerido');
+    shape['REMITENTE'] = z
+      .string({ required_error: 'El remitente es requerido' })
+      .min(1, 'El remitente es requerido');
+    shape['NOMBRE DE EXPEDIENTE'] = z
+      .string({ required_error: 'El nombre es requerido' })
+      .min(1, 'El nombre es requerido');
+    shape['FECHA DE INGRESO'] = z
+      .string({
+        required_error: 'La fecha de ingreso es requerida',
+      })
+      .min(1, 'La fecha de ingreso es requerida');
+    shape['EXPEDIENTE RELACIONADO'] = z.string().optional();
+  }
   shape['aniadirArchivo'] = z.boolean().optional();
   shape['PDF_EXPEDIENTE'] = z
     .union([z.undefined(), z.null(), z.any()])

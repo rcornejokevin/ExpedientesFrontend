@@ -6,6 +6,19 @@ import { cva } from 'class-variance-authority';
 import { ChevronDownIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+type NavigationMenuViewportMetrics = {
+  center: number;
+  triggerWidth: number;
+};
+
+type NavigationMenuInternalContextValue = {
+  viewportPosition: NavigationMenuViewportMetrics | null;
+  updateViewportPosition: (trigger: HTMLElement) => void;
+};
+
+const NavigationMenuInternalContext =
+  React.createContext<NavigationMenuInternalContextValue | null>(null);
+
 function NavigationMenu({
   className,
   children,
@@ -14,19 +27,76 @@ function NavigationMenu({
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Root> & {
   viewport?: boolean;
 }) {
+  const menuRef = React.useRef<HTMLElement | null>(null);
+  const lastTriggerRef = React.useRef<HTMLElement | null>(null);
+  const [viewportPosition, setViewportPosition] =
+    React.useState<NavigationMenuViewportMetrics | null>(null);
+
+  const updateViewportPosition = React.useCallback((trigger: HTMLElement) => {
+    lastTriggerRef.current = trigger;
+    const menuElement =
+      menuRef.current ??
+      trigger.closest<HTMLElement>('[data-slot="navigation-menu"]');
+    if (!menuElement) return;
+
+    const menuRect = menuElement.getBoundingClientRect();
+    const triggerRect = trigger.getBoundingClientRect();
+    const center = triggerRect.left - menuRect.left + triggerRect.width / 2;
+
+    setViewportPosition((previous) => {
+      if (
+        previous &&
+        previous.center === center &&
+        previous.triggerWidth === triggerRect.width
+      ) {
+        return previous;
+      }
+
+      return {
+        center,
+        triggerWidth: triggerRect.width,
+      };
+    });
+  }, []);
+
+  React.useEffect(() => {
+    // Recompute placement when layout changes width-wise.
+    if (typeof window === 'undefined') return;
+
+    const handleResize = () => {
+      if (lastTriggerRef.current) {
+        updateViewportPosition(lastTriggerRef.current);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateViewportPosition]);
+
+  const contextValue = React.useMemo(
+    () => ({
+      viewportPosition,
+      updateViewportPosition,
+    }),
+    [viewportPosition, updateViewportPosition],
+  );
+
   return (
-    <NavigationMenuPrimitive.Root
-      data-slot="navigation-menu"
-      data-viewport={viewport}
-      className={cn(
-        'group/navigation-menu relative flex max-w-max flex-1 items-center justify-center',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      {viewport && <NavigationMenuViewport />}
-    </NavigationMenuPrimitive.Root>
+    <NavigationMenuInternalContext.Provider value={contextValue}>
+      <NavigationMenuPrimitive.Root
+        ref={menuRef}
+        data-slot="navigation-menu"
+        data-viewport={viewport}
+        className={cn(
+          'group/navigation-menu relative flex max-w-max flex-1 items-center justify-center',
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        {viewport && <NavigationMenuViewport />}
+      </NavigationMenuPrimitive.Root>
+    </NavigationMenuInternalContext.Provider>
   );
 }
 
@@ -66,13 +136,43 @@ const navigationMenuTriggerStyle = cva(
 function NavigationMenuTrigger({
   className,
   children,
+  onPointerEnter,
+  onPointerMove,
+  onPointerDown,
+  onFocus,
   ...props
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Trigger>) {
+  const context = React.useContext(NavigationMenuInternalContext);
+
   return (
     <NavigationMenuPrimitive.Trigger
       data-slot="navigation-menu-trigger"
       className={cn(navigationMenuTriggerStyle(), 'group', className)}
       {...props}
+      onPointerEnter={(event) => {
+        onPointerEnter?.(event);
+        if (!event.defaultPrevented) {
+          context?.updateViewportPosition(event.currentTarget);
+        }
+      }}
+      onPointerMove={(event) => {
+        onPointerMove?.(event);
+        if (!event.defaultPrevented) {
+          context?.updateViewportPosition(event.currentTarget);
+        }
+      }}
+      onPointerDown={(event) => {
+        onPointerDown?.(event);
+        if (!event.defaultPrevented) {
+          context?.updateViewportPosition(event.currentTarget);
+        }
+      }}
+      onFocus={(event) => {
+        onFocus?.(event);
+        if (!event.defaultPrevented) {
+          context?.updateViewportPosition(event.currentTarget);
+        }
+      }}
     >
       {children}{' '}
       <ChevronDownIcon
@@ -104,12 +204,15 @@ function NavigationMenuViewport({
   className,
   ...props
 }: React.ComponentProps<typeof NavigationMenuPrimitive.Viewport>) {
+  const context = React.useContext(NavigationMenuInternalContext);
+  const left = context?.viewportPosition?.center;
+
   return (
     <div
       className={cn(
-        'absolute top-full left-0 isolate z-50 flex justify-center',
+        'absolute top-full isolate z-50 flex justify-center transform -translate-x-1/2 transition-[left] duration-150 ease-out',
       )}
-      style={{ left: '300px', width: '200px' }}
+      style={{ left: left != null ? `${left}px` : '50%', width: '250px' }}
     >
       <NavigationMenuPrimitive.Viewport
         data-slot="navigation-menu-viewport"

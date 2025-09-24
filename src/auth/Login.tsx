@@ -66,7 +66,11 @@ const Login = () => {
       };
       setAlert(null);
       login({ user });
-      navigate('/dashboard', { replace: true });
+      if (user.perfil == 'IT') {
+        navigate('/flujos', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (error) {
       setAlert({ type: 'error', message: 'Error de autenticación ' + error });
     }

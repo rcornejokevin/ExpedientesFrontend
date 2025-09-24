@@ -17,11 +17,13 @@ import {
 } from '@/components/ui/dialog';
 import EditExpedienteDetail from './EditExpedienteDetail';
 import EditExpedienteForm from './EditExpedienteForm';
+import EditExpedienteNotes from './EditExpedienteNotes';
 
 interface AddUsuarioI {
   open: boolean;
   setOpen: any;
   idExpediente: string;
+  expedientes: any[];
 }
 interface ItemSelect {
   nombre: string;
@@ -34,6 +36,7 @@ export default function EditExpediente({
   open,
   setOpen,
   idExpediente,
+  expedientes,
 }: AddUsuarioI) {
   const [expediente, setExpediente] = useState<any>();
   const [extraFields, setExtraFields] = useState<any>([]);
@@ -43,9 +46,9 @@ export default function EditExpediente({
   const [etapa, setEtapa] = useState<ItemSelect[]>();
   const [subEtapa, setSubEtapa] = useState<ItemSelect[]>();
   const [asesor, setAsesor] = useState<ItemSelect[]>();
-  const [historial, setHistorial] = useState(true);
+  const [estatus, setEstatus] = useState(1);
   useEffect(() => {
-    setHistorial(true);
+    setEstatus(1);
     const loadInformation = async () => {
       setLoading(true);
       setExpediente(undefined);
@@ -152,7 +155,7 @@ export default function EditExpediente({
           <Alerts />
           <Button
             onClick={() => {
-              setHistorial(!historial);
+              setEstatus(1);
             }}
             type="button"
             className="w-30 shadow-none font-bold"
@@ -162,14 +165,14 @@ export default function EditExpediente({
               marginLeft: '-25px',
               marginBottom: '-5px',
               borderColor: 'transparent',
-              backgroundColor: historial ? '' : '#E2E8EB',
+              backgroundColor: estatus == 1 ? '' : '#E2E8EB',
             }}
           >
             GENERAL
           </Button>
           <Button
             onClick={() => {
-              setHistorial(!historial);
+              setEstatus(2);
             }}
             type="button"
             className="w-30 shadow-none font-bold"
@@ -178,12 +181,28 @@ export default function EditExpediente({
             style={{
               marginBottom: '-5px',
               borderColor: 'transparent',
-              backgroundColor: historial ? '#E2E8EB' : '',
+              backgroundColor: estatus == 2 ? '' : '#E2E8EB',
             }}
           >
-            Historial
+            HISTORIAL
           </Button>
-          {historial ? (
+          <Button
+            onClick={() => {
+              setEstatus(3);
+            }}
+            type="button"
+            className="w-30 shadow-none font-bold"
+            variant="outline"
+            size="lg"
+            style={{
+              marginBottom: '-5px',
+              borderColor: 'transparent',
+              backgroundColor: estatus == 3 ? '' : '#E2E8EB',
+            }}
+          >
+            NOTAS
+          </Button>
+          {estatus == 1 && (
             <EditExpedienteForm
               etapa={etapa}
               subEtapa={subEtapa}
@@ -192,14 +211,17 @@ export default function EditExpediente({
               setOpen={setOpen}
               extraFields={extraFields}
               asesor={asesor}
+              expedientes={expedientes}
             />
-          ) : (
+          )}
+          {estatus == 2 && (
             <EditExpedienteDetail
               expediente={expediente}
               setAlert={setAlert}
               user={user}
             />
           )}
+          {estatus == 3 && <EditExpedienteNotes expediente={expediente} />}
         </DialogBody>
       </DialogContent>
     </Dialog>

@@ -35,10 +35,14 @@ const Charts = () => {
         ? response.data.series
         : [];
 
-      const slicesI = assignedByType.map((item: any) => ({
-        name: item.flow,
-        value: Number(item.count) || 0,
-      }));
+      const slicesI = assignedByType.map((item: any) => {
+        const count = Number(item.count) || 0;
+        return {
+          name: item.flow,
+          value: count,
+          count,
+        };
+      });
       setSlices(slicesI);
       const seriesI = seriesByType.map((item: any) => ({
         value: item.date,
@@ -46,14 +50,20 @@ const Charts = () => {
         attended: Number(item.attended) || 0,
       }));
       setSeries(seriesI);
-      const attendedI = attendedByType.map((item: any) => ({
-        name: item.flow,
-        value: Number(item.count) || 0,
-      }));
+      const attendedI = attendedByType.map((item: any) => {
+        const count = Number(item.count) || 0;
+        return {
+          name: item.flow,
+          value: count,
+          count,
+        };
+      });
       setAttended(attendedI);
     };
     fetchData();
   }, [user?.jwt]);
+
+  const numberFormatter = useMemo(() => new Intl.NumberFormat('es-ES'), []);
 
   const total = useMemo(
     () =>
@@ -87,7 +97,7 @@ const Charts = () => {
               Asignados: item.assigned,
               Atendidos: item.attended,
             }))}
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 5, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="5 5" />
             <XAxis dataKey="name" />
@@ -149,7 +159,7 @@ const Charts = () => {
                       </span>
                     </div>
                     <span className="text-[12px] font-extrabold text-[#1E2851]">
-                      {pct}%
+                      {pct}% ({numberFormatter.format(s.count ?? s.value ?? 0)})
                     </span>
                   </div>
                 );
@@ -210,7 +220,7 @@ const Charts = () => {
                       </span>
                     </div>
                     <span className="text-[12px] font-extrabold text-[#1E2851]">
-                      {pct}%
+                      {pct}% ({numberFormatter.format(s.count ?? s.value ?? 0)})
                     </span>
                   </div>
                 );
