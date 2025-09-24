@@ -50,6 +50,7 @@ import { Textarea } from '@/components/ui/textarea';
 import DatePickerMarn from '@/components/datePicker';
 import PdfUpload from '@/components/pdf-upload';
 import { printReactPdf } from '@/components/printPdf';
+import { Field } from './Field';
 import { ApiSchemaConfig, getNewSchema } from './NewSchemaType';
 
 interface iNewExpediente {
@@ -535,45 +536,10 @@ export default function NewExpediente({
                           (item) => item.value == form.watch('TIPO DE PROCESO'),
                         )
                         .at(0)?.flujoRelacionado == true && (
-                        <FormField
-                          control={form.control}
-                          name={'EXPEDIENTE RELACIONADO'}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="color-dark-blue-marn font-bold">
-                                EXPEDIENTE RELACIONADO
-                              </FormLabel>
-                              <FormControl>
-                                <Select
-                                  name={'EXPEDIENTE RELACIONADO'}
-                                  onValueChange={(val) => {
-                                    field.onChange(val);
-                                  }}
-                                  disabled={onPrint}
-                                  value={field.value}
-                                  defaultValue={field.value}
-                                >
-                                  <SelectTrigger className="rounded-3xl">
-                                    <SelectValue placeholder="Seleccione un Expediente" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem key={'empty'} value="0">
-                                      [SIN EXPEDIENTE RELACIONADO]
-                                    </SelectItem>
-                                    {expedientes?.map((item) => (
-                                      <SelectItem
-                                        key={item.id}
-                                        value={String(item.id)}
-                                      >
-                                        {item.codigo}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                        <Field
+                          disabled={onPrint}
+                          form={form}
+                          expedientes={expedientes}
                         />
                       )}
 

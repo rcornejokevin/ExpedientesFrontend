@@ -139,7 +139,10 @@ const EditExpedienteForm = ({
     def['REMITENTE'] =
       expediente.remitenteId != null ? String(expediente.remitenteId) : '';
     def['FECHA DE INGRESO'] = expediente.fechaIngreso;
-    def['EXPEDIENTE RELACIONADO'] = expediente.expedienteRelacionadoId;
+    def['EXPEDIENTE RELACIONADO'] =
+      expediente.expedienteRelacionadoId != null
+        ? String(expediente.expedienteRelacionadoId)
+        : '0';
     def['NOMBRE DE EXPEDIENTE'] = expediente.nombre;
     return def;
   }, [schemaCfg, expediente]);

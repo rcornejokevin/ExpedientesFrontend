@@ -106,60 +106,63 @@ export default function Usuarios() {
             </button>
           </div>
         </div>
-
-        <Table>
-          <TableHeader className="" style={{ backgroundColor: '#2AA7DC' }}>
-            <TableRow>
-              <TableHead className="text-white font-bold">#</TableHead>
-              <TableHead className="text-white font-bold">ID</TableHead>
-              <TableHead className="text-white font-bold">USERNAME</TableHead>
-              <TableHead className="text-white font-bold">PERFIL</TableHead>
-              <TableHead className="text-white font-bold">OPERATIVO</TableHead>
-              <TableHead className="text-white font-bold">ACCIÓN</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users?.map((user, i) => (
-              <TableRow key={user.id} style={{ backgroundColor: '#F6F9FB' }}>
-                <TableCell>{i + 1}</TableCell>
-                <TableCell>{user.id}</TableCell>
-                <TableCell>{user.username}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{user.perfil}</Badge>
-                </TableCell>
-                <TableCell>
-                  {user.operativo ? <CheckCircle color="green" /> : <X />}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-4">
-                    <Button
-                      aria-label="Editar"
-                      className="rounded-md p-1.5 hover:bg-gray-100"
-                      onClick={() => {
-                        setEdit(true);
-                        setUsuario(user);
-                        setOpen(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 text-white" />
-                    </Button>
-                    <Button
-                      aria-label="Eliminar"
-                      variant={'destructive'}
-                      className="rounded-md p-1.5 hover:bg-gray-100"
-                      onClick={() => {
-                        setUsuario(user);
-                        setOpenDialog(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-white" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="overflow-hidden rounded-3xl border border-[#E2E8F0]">
+          <div className="max-h-[60vh] overflow-y-auto">
+            <Table>
+              <TableHeader className="" style={{ backgroundColor: '#2AA7DC' }}>
+                <TableRow>
+                  <TableHead className="text-white font-bold">#</TableHead>
+                  <TableHead className="text-white font-bold">ID</TableHead>
+                  <TableHead className="text-white font-bold">USERNAME</TableHead>
+                  <TableHead className="text-white font-bold">PERFIL</TableHead>
+                  <TableHead className="text-white font-bold">OPERATIVO</TableHead>
+                  <TableHead className="text-white font-bold">ACCIÓN</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users?.map((user, i) => (
+                  <TableRow key={user.id} style={{ backgroundColor: '#F6F9FB' }}>
+                    <TableCell>{i + 1}</TableCell>
+                    <TableCell>{user.id}</TableCell>
+                    <TableCell>{user.username}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{user.perfil}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.operativo ? <CheckCircle color="green" /> : <X />}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-4">
+                        <Button
+                          aria-label="Editar"
+                          className="rounded-md p-1.5 hover:bg-gray-100"
+                          onClick={() => {
+                            setEdit(true);
+                            setUsuario(user);
+                            setOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4 text-white" />
+                        </Button>
+                        <Button
+                          aria-label="Eliminar"
+                          variant={'destructive'}
+                          className="rounded-md p-1.5 hover:bg-gray-100"
+                          onClick={() => {
+                            setUsuario(user);
+                            setOpenDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-white" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
     </>
   );

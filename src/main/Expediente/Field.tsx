@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -16,18 +10,25 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { ChevronsUpDown } from 'lucide-react';
 
 interface iField {
   expedientes: any[];
-  expediente: any;
+  expediente?: any;
   form: any;
+  disabled?: boolean;
 }
-const Field = ({ expedientes, expediente, form }: iField) => {
+const Field = ({ expedientes, expediente, form, disabled = false }: iField) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const options = useMemo(
@@ -62,6 +63,7 @@ const Field = ({ expedientes, expediente, form }: iField) => {
 
   return (
     <FormField
+      disabled={disabled}
       control={form.control}
       name={'EXPEDIENTE RELACIONADO'}
       render={({ field }) => {
@@ -94,7 +96,8 @@ const Field = ({ expedientes, expediente, form }: iField) => {
                       className="w-full justify-between rounded-3xl"
                     >
                       <span className="truncate font-semibold text-[#1E2851]">
-                        {selectedOption?.codigo || '[SIN EXPEDIENTE RELACIONADO]'}
+                        {selectedOption?.codigo ||
+                          '[SIN EXPEDIENTE RELACIONADO]'}
                       </span>
                       <ChevronsUpDown className="h-4 w-4 opacity-50" />
                     </Button>
