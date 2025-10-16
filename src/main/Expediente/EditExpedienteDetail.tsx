@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { GetFile, GetFileDetail, GetListDetails } from '@/models/Expediente';
-import { id } from 'date-fns/locale';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useLoading } from '@/providers/loading-provider';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';

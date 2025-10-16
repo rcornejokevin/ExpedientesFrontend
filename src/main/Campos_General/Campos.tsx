@@ -86,9 +86,9 @@ export default function CamposGeneral() {
             flujo: f.flujoId,
             orden: f.orden,
             requerido: f.requerido,
-            tipo: f.tipoCampo,
+            tipo: f.tipo,
             label: f.label,
-            placeHolder: f.placeHolder,
+            placeHolder: f.placeholder,
             opciones: f.opciones,
             editable: f.editable,
           }));

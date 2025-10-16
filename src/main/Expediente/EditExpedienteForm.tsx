@@ -88,7 +88,7 @@ const EditExpedienteForm = ({
     return fn(values, ctx, opts);
   }, []);
   const defaultValues = useMemo(() => {
-    if (!schemaCfg) return {};
+    if (!expediente) return {};
     const def: Record<string, any> = {};
     let jsonDatos: any[] = [];
     try {
@@ -100,7 +100,7 @@ const EditExpedienteForm = ({
         setAlert('error', e);
       }
     }
-    for (const f of schemaCfg.fields) {
+    for (const f of schemaCfg?.fields ?? []) {
       def[f.nombre] = f.tipo === 'Cheque' ? false : '';
       for (const field of jsonDatos) {
         if (field.label === f.label && f.editable) {
