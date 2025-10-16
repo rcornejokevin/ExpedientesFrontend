@@ -67,10 +67,15 @@ export default function EditExpediente({
         ]);
         // Usuarios
         if (usuariosRes.code === '000') {
-          const mapped: any = usuariosRes.data.map((f: any) => ({
-            value: String(f.id),
-            nombre: f.username,
-          }));
+          const data = usuariosRes.data;
+          const mapped: any = data
+            .map((f: any) => ({
+              value: String(f.id),
+              nombre: f.username,
+              perfil: f.perfil,
+            }))
+            .filter((f: any) => f.perfil != 'IT');
+
           setAsesor(mapped);
         } else {
           setAlert({ type: 'error', message: usuariosRes.message });
@@ -78,20 +83,12 @@ export default function EditExpediente({
 
         if (subRes.code === '000') {
           const data = subRes.data;
-          const subEtapaActual = data
-            .filter((item: any) => item.id == exp.etapaDetalleId)
-            .at(0);
           const mapped: any = data
             .sort((a: any, b: any) => (a.orden ?? 0) - (b.orden ?? 0))
             .map((f: any) => ({
               value: String(f.id),
               nombre: f.nombre,
               padre: String(f.etapaId ?? ''),
-              disabled:
-                f.etapaId == exp.etapaId &&
-                (subEtapaActual
-                  ? (subEtapaActual.orden ?? 0) > (f.orden ?? 0)
-                  : false),
             }));
           setSubEtapa(mapped);
         } else {
@@ -100,18 +97,12 @@ export default function EditExpediente({
 
         if (etapasRes.code === '000') {
           const data = etapasRes.data;
-          const etapaActual = data
-            .filter((item: any) => item.id == exp.etapaId)
-            .at(0);
           const mapped: any = data
             .sort((a: any, b: any) => (a.orden ?? 0) - (b.orden ?? 0))
             .map((f: any) => ({
               value: String(f.id),
               nombre: f.nombre,
               padre: f.flujoId,
-              disabled: etapaActual
-                ? (f.orden ?? 0) < (etapaActual.orden ?? 0)
-                : false,
             }));
           setEtapa(mapped);
         } else {

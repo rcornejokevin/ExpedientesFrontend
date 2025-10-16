@@ -2,10 +2,14 @@ interface iCards {
   expedientes: any[];
   setEditedExpediente: (editedElement: string) => void;
 }
+
 const Cards = ({ expedientes, setEditedExpediente }: iCards) => {
   return (
-    <div className="flex overflow-y-auto sm:max-h-[40vh] lg:max-h-[50vh]">
-      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6 gap-5">
+    <div
+      className="h-full min-h-0 overflow-y-auto pr-4"
+      style={{ maxHeight: 'calc(100vh - 260px)' }}
+    >
+      <div className="grid grid-cols-1 gap-5 pb-16 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {expedientes.map((e, idx) => (
           <div
             key={`${e.codigo}-${idx}`}
@@ -19,7 +23,6 @@ const Cards = ({ expedientes, setEditedExpediente }: iCards) => {
             <div className="mt-2 text-[#1E2851] font-extrabold leading-snug">
               {e.nombre?.length > 56 ? e.nombre.slice(0, 56) + '…' : e.nombre}
             </div>
-
             <div className="mt-3 space-y-1.5 text-[12px]">
               <div>
                 <span className="text-[#2DA6DC] uppercase">
@@ -46,7 +49,9 @@ const Cards = ({ expedientes, setEditedExpediente }: iCards) => {
                 </span>
               </div>
               <div>
-                <span className="text-[#2DA6DC] uppercase">ÚLTIMA ETAPA: </span>
+                <span className="text-[#2DA6DC] uppercase">
+                  ÚLTIMA ETAPA:{' '}
+                </span>
                 <span className="text-[#1E2851]/80 font-semibold">
                   {e.etapa ?? '-'}
                 </span>
@@ -62,7 +67,6 @@ const Cards = ({ expedientes, setEditedExpediente }: iCards) => {
                 </span>
               </div>
             </div>
-
             <div className="mt-3">
               <button
                 type="button"
@@ -80,4 +84,5 @@ const Cards = ({ expedientes, setEditedExpediente }: iCards) => {
     </div>
   );
 };
+
 export default Cards;

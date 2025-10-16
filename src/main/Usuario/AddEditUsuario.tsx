@@ -172,8 +172,11 @@ export default function AddEditUsuario({
                               <SelectItem value={'ADMINISTRADOR'}>
                                 ADMINISTRADOR
                               </SelectItem>
-                              <SelectItem value={'IT'}>IT</SelectItem>
                               <SelectItem value={'ASESOR'}>ASESOR</SelectItem>
+                              <SelectItem value={'IT'}>IT</SelectItem>
+                              <SelectItem value={'PROCURADOR'}>
+                                PROCURADOR
+                              </SelectItem>
                               <SelectItem value={'RECEPCIÓN'}>
                                 RECEPCIÓN
                               </SelectItem>

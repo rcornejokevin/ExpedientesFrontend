@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { GetFile, GetListDetails } from '@/models/Expediente';
+import { GetFile, GetFileDetail, GetListDetails } from '@/models/Expediente';
+import { id } from 'date-fns/locale';
 import { Check, X } from 'lucide-react';
 import { useLoading } from '@/providers/loading-provider';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +50,30 @@ const EditExpedienteDetail = ({
       setLoading(false);
     }
   };
+  const downloadFileDetail = async (id: number) => {
+    setLoading(true);
+    try {
+      const response = await GetFileDetail(user?.jwt ?? '', id);
+      if (response.code == '000') {
+        const data = response.data;
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${data.archivo}`;
+        link.download = data.nombreArchivo;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        setAlert({ type: 'error', message: response.message });
+      }
+    } catch (error) {
+      setAlert({
+        type: 'error',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     const fetch = async () => {
       try {
@@ -66,6 +91,7 @@ const EditExpedienteDetail = ({
               f.nombreArchivo != '' && f.nombreArchivo != null ? true : false,
             estatus: f.estatus,
             asesorNuevo: f.asesorNuevo,
+            id: f.id,
           }));
           setDetails(mapped);
         } else {
@@ -191,6 +217,9 @@ const EditExpedienteDetail = ({
                         <Badge
                           style={{ backgroundColor: '#C8E42B' }}
                           className="rounded-3xl"
+                          onClick={() => {
+                            downloadFileDetail(Number.parseInt(detail.id));
+                          }}
                         >
                           <Check color="white" />
                         </Badge>

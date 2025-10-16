@@ -108,7 +108,7 @@ const Dashboard = () => {
       <div className="mx-5 mt-5 min-h-screen flex flex-col">
         <Alerts />
         <div className="flex-1 min-h-0 flex gap-4">
-          <div className="basis-4/5">
+          <div className="basis-4/5 flex flex-col min-h-0">
             <div className="flex items-center justify-between">
               <div className="flex">
                 <FolderOpen
@@ -176,16 +176,16 @@ const Dashboard = () => {
                 </button>
               )}
             </div>
-            <div className="mt-6 px-4 flex-1 min-h-0 flex flex-col">
+            <div className="mt-6 px-4 flex-1 min-h-0 flex flex-col overflow-hidden">
               {mosaicos ? (
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 overflow-hidden">
                   <Cards
                     expedientes={expedientesFiltered}
                     setEditedExpediente={setEditedExpediente}
                   />
                 </div>
               ) : (
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 overflow-hidden">
                   <Table
                     expedientes={expedientesFiltered}
                     setEditedExpediente={setEditedExpediente}

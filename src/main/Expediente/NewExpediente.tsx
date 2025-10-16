@@ -161,10 +161,14 @@ export default function NewExpediente({
       const response = await GetListUsuario(user?.jwt ?? '');
       if (response.code === '000') {
         const data = response.data;
-        const mapped: any = data.map((f: any) => ({
-          value: String(f.id),
-          nombre: f.username,
-        }));
+        const mapped: any = data
+          .map((f: any) => ({
+            value: String(f.id),
+            nombre: f.username,
+            perfil: f.perfil,
+          }))
+          .filter((f: any) => f.perfil != 'IT')
+          .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
         setAsesor(mapped);
       } else {
         setAlert({ type: 'error', message: response.message });
@@ -174,10 +178,12 @@ export default function NewExpediente({
       const response = await GetListRemitente(user?.jwt ?? '');
       if (response.code === '000') {
         const data = response.data;
-        const mapped: any = data.map((f: any) => ({
-          value: String(f.id),
-          nombre: f.descripcion,
-        }));
+        const mapped: any = data
+          .map((f: any) => ({
+            value: String(f.id),
+            nombre: f.descripcion,
+          }))
+          .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
         setRemitente(mapped);
       } else {
         setAlert({ type: 'error', message: response.message });
@@ -217,6 +223,8 @@ export default function NewExpediente({
     def['SUB-ETAPA ACTUAL'] = '';
     def['CODIGO'] = '[PENDIENTE]';
     def['FECHA DE ÚLTIMA ETAPA'] = new Date().toISOString();
+    def['EXPEDIENTE RELACIONADO'] = '';
+    def['PDF_EXPEDIENTE'] = undefined;
     return def;
   }, [schemaCfg]);
   const form = useForm<Record<string, any>>({
@@ -415,10 +423,10 @@ export default function NewExpediente({
                               ASUNTO DE EXPEDIENTE
                             </FormLabel>
                             <FormControl>
-                              <Input
+                              <Textarea
                                 readOnly={onPrint}
+                                placeholder={'Asunto del expediente...'}
                                 className="rounded-3xl"
-                                placeholder="Asunto del expediente..."
                                 {...field}
                               />
                             </FormControl>

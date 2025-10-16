@@ -141,7 +141,9 @@ const New = async (jwt: string, obj: ItemExpediente) => {
     asunto: obj['ASUNTO'],
     archivo: obj.PDF_EXPEDIENTE ? await fileToBase64(obj.PDF_EXPEDIENTE) : '',
     campos: JSON.stringify(obj.camposAdicionales) || '',
-    expedienteRelacionadoId: obj['expedienteRelacionadoId'],
+    expedienteRelacionadoId: Number.parseInt(
+      obj['expedienteRelacionadoId'] || '0',
+    ),
   };
   try {
     const response: any = await sendPost(newObj, 'cases/add', true, jwt);
@@ -239,6 +241,10 @@ const GetFile = async (jwt: string, id: number) => {
   const response = await sendGet('', `cases/document/${id}`, jwt);
   return await response;
 };
+const GetFileDetail = async (jwt: string, id: number) => {
+  const response = await sendGet('', `cases/document_detail/${id}`, jwt);
+  return await response;
+};
 export {
   GetList,
   New,
@@ -246,6 +252,7 @@ export {
   GetItemExpediente,
   Edit,
   GetFile,
+  GetFileDetail,
   GetListDetails,
   Indicators,
   ChangeStatus,

@@ -92,7 +92,7 @@ const EditExpedienteForm = ({
     const def: Record<string, any> = {};
     let jsonDatos: any[] = [];
     try {
-      jsonDatos = JSON.parse(expediente.campoValorJson);
+      jsonDatos = JSON.parse(expediente.campoValorJson ?? '[]');
     } catch (e) {
       if (e instanceof Error) {
         setAlert('error', e.message);
@@ -195,7 +195,7 @@ const EditExpedienteForm = ({
     }
     let jsonDatos = [];
     try {
-      jsonDatos = JSON.parse(expediente.campoValorJson);
+      jsonDatos = JSON.parse(expediente.campoValorJson ?? '[]');
     } catch (e) {
       if (e instanceof Error) {
         setAlert('error', e.message);
@@ -320,10 +320,12 @@ const EditExpedienteForm = ({
       const response = await GetListRemitente(user?.jwt ?? '');
       if (response.code === '000') {
         const data = response.data;
-        const mapped: any = data.map((f: any) => ({
-          value: String(f.id),
-          nombre: f.descripcion,
-        }));
+        const mapped: any = data
+          .map((f: any) => ({
+            value: String(f.id),
+            nombre: f.descripcion,
+          }))
+          .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
         setRemitente(mapped);
       } else {
         setAlert({ type: 'error', message: response.message });
@@ -430,9 +432,9 @@ const EditExpedienteForm = ({
                         ASUNTO DE EXPEDIENTE
                       </FormLabel>
                       <FormControl>
-                        <Input
+                        <Textarea
+                          placeholder={'Asunto del expediente...'}
                           className="rounded-3xl"
-                          placeholder="Asunto del expediente..."
                           {...field}
                         />
                       </FormControl>
@@ -672,7 +674,8 @@ const EditExpedienteForm = ({
                         <Select
                           disabled={
                             expediente.estatus != 'Abierto' ||
-                            user?.perfil == 'RECEPCIÓN'
+                            user?.perfil == 'RECEPCIÓN' ||
+                            user?.perfil == 'PROCURADOR'
                           }
                           name={'etapa'}
                           onValueChange={(val) => {
@@ -725,7 +728,8 @@ const EditExpedienteForm = ({
                           <Select
                             disabled={
                               expediente.estatus != 'Abierto' ||
-                              user?.perfil == 'RECEPCIÓN'
+                              user?.perfil == 'RECEPCIÓN' ||
+                              user?.perfil == 'PROCURADOR'
                             }
                             name={'subEtapa'}
                             onValueChange={(val) => {
@@ -787,7 +791,7 @@ const EditExpedienteForm = ({
                           <SelectContent>
                             {asesor
                               ?.sort((a: any, b: any) =>
-                                a.value.localeCompare(b.value),
+                                a.nombre.localeCompare(b.nombre),
                               )
                               ?.map((item) => (
                                 <SelectItem
@@ -955,7 +959,8 @@ const EditExpedienteForm = ({
             <div className="flex justify-start gap-2">
               {expediente.puedeCerrarse &&
               expediente.estatus == 'Abierto' &&
-              user?.perfil != 'RECEPCIÓN' ? (
+              user?.perfil != 'RECEPCIÓN' &&
+              user?.perfil != 'PROCURADOR' ? (
                 <Button
                   className="rounded-3xl mr-3"
                   type="button"
