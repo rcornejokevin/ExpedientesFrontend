@@ -98,6 +98,7 @@ const Reporte = () => {
     estatus: '',
     asunto: '',
     remitenteId: 0,
+    reporteId: 1,
   });
   const { user } = useAuth();
   const { setAlert } = useFlash();
@@ -416,7 +417,7 @@ const Reporte = () => {
   });
   useEffect(() => {
     const fetchData = async () => {
-      const response = await GetList(user?.jwt ?? '', filtro);
+      const response = await GetList(user?.jwt ?? '', filtro, 1);
       if (response.code === '000') {
         const mapped = response.data.map((item: any) => ({
           nombre: item.nombre,

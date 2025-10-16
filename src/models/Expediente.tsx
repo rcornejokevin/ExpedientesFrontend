@@ -40,7 +40,11 @@ export interface ExpedienteListFilters {
   remitenteId?: number;
 }
 
-const GetList = async (jwt: string, filters?: ExpedienteListFilters) => {
+const GetList = async (
+  jwt: string,
+  filters?: ExpedienteListFilters,
+  reporteId?: number,
+) => {
   const params: Record<string, any> = {
     limit: filters?.limit ?? 100,
     fechaInicioIngreso: filters?.fechaInicioIngreso ?? '',
@@ -54,6 +58,7 @@ const GetList = async (jwt: string, filters?: ExpedienteListFilters) => {
     estatus: filters?.estatus ?? '',
     asunto: filters?.asunto ?? '',
     remitenteId: filters?.remitenteId ?? 0,
+    reporteId: reporteId ?? 0,
   };
   const response = await sendGet(params, 'cases/list', jwt);
   return response;
