@@ -6,7 +6,7 @@ import {
   Usuario,
 } from '@/models/Usuarios';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Key, LoaderCircleIcon, LucideUser } from 'lucide-react';
+import { Key, LoaderCircleIcon, LucideUser, Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Alerts, { useFlash } from '@/lib/alerts';
 import { Button } from '@/components/ui/button';
@@ -58,12 +58,14 @@ export default function AddEditUsuario({
     defaultValues: {
       username: '',
       perfil: '',
+      email: '',
     },
   });
   const resetForm = () => {
     form.reset({
       username: '',
       perfil: '',
+      email: '',
     });
     form.clearErrors();
   };
@@ -76,6 +78,7 @@ export default function AddEditUsuario({
           username: values.username,
           perfil: values.perfil,
           operativo: values.operativo,
+          email: values.email,
         };
         response = await NewUsuario(user?.jwt ?? '', newUser);
       } else if (usuario != undefined) {
@@ -83,6 +86,7 @@ export default function AddEditUsuario({
         itemEditted.username = values.username;
         itemEditted.perfil = values.perfil;
         itemEditted.operativo = values.operativo;
+        itemEditted.email = values.email;
         response = await EditUsuario(user?.jwt ?? '', itemEditted);
       }
       if (response.code == '000') {
@@ -114,6 +118,7 @@ export default function AddEditUsuario({
         username: usuario.username,
         perfil: usuario.perfil,
         operativo: usuario.operativo,
+        email: usuario.email,
       });
       form.clearErrors();
     }
@@ -141,6 +146,24 @@ export default function AddEditUsuario({
                             <LucideUser />
                           </InputAddon>
                           <Input placeholder="Ingrese el username" {...field} />
+                        </InputGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <InputGroup>
+                          <InputAddon mode="icon">
+                            <Mail />
+                          </InputAddon>
+                          <Input placeholder="Ingrese el email" {...field} />
                         </InputGroup>
                       </FormControl>
                       <FormMessage />

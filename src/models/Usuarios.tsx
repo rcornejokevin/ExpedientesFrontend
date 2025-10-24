@@ -5,6 +5,7 @@ export interface Usuario {
   username: string;
   perfil?: string;
   operativo: boolean;
+  email?: string;
 }
 const GetList = async (jwt: string) => {
   const response = await sendGet('', 'usuario/list', jwt);
@@ -15,6 +16,7 @@ const New = async (jwt: string, obj: Usuario) => {
     username: obj.username,
     perfil: obj.perfil,
     operativo: obj.operativo,
+    email: obj.email,
   };
   try {
     const response: any = await sendPost(newObj, 'usuario/add', true, jwt);
@@ -45,6 +47,7 @@ const Edit = async (jwt: string, item: Usuario) => {
     username: item.username,
     perfil: item.perfil,
     operativo: item.operativo,
+    email: item.email,
   };
   try {
     const response: any = await sendPut(newObj, 'usuario/edit', true, jwt);

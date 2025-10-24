@@ -4,6 +4,7 @@ export const getNewSchema = () => {
   return z.object({
     username: z.string().min(1, { message: 'El username es requerido' }),
     perfil: z.string().min(1, { message: 'El perfil es requerido' }),
+    email: z.string().min(1, { message: 'El email es requerido' }),
     operativo: z.boolean(),
   });
 };

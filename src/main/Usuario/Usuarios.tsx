@@ -44,6 +44,7 @@ export default function Usuarios() {
             username: f.username,
             perfil: f.perfil,
             operativo: f.operativo,
+            email: f.email,
           }));
         setUsers(mapped);
       }
@@ -113,18 +114,27 @@ export default function Usuarios() {
                 <TableRow>
                   <TableHead className="text-white font-bold">#</TableHead>
                   <TableHead className="text-white font-bold">ID</TableHead>
-                  <TableHead className="text-white font-bold">USERNAME</TableHead>
+                  <TableHead className="text-white font-bold">
+                    USERNAME
+                  </TableHead>
+                  <TableHead className="text-white font-bold">EMAIL</TableHead>
                   <TableHead className="text-white font-bold">PERFIL</TableHead>
-                  <TableHead className="text-white font-bold">OPERATIVO</TableHead>
+                  <TableHead className="text-white font-bold">
+                    OPERATIVO
+                  </TableHead>
                   <TableHead className="text-white font-bold">ACCIÓN</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users?.map((user, i) => (
-                  <TableRow key={user.id} style={{ backgroundColor: '#F6F9FB' }}>
+                  <TableRow
+                    key={user.id}
+                    style={{ backgroundColor: '#F6F9FB' }}
+                  >
                     <TableCell>{i + 1}</TableCell>
                     <TableCell>{user.id}</TableCell>
                     <TableCell>{user.username}</TableCell>
+                    <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">{user.perfil}</Badge>
                     </TableCell>
