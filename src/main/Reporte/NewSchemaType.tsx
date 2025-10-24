@@ -3,11 +3,7 @@ import { z } from 'zod';
 // Esquema para filtros del reporte
 export const getNewSchema = () => {
   return z.object({
-    limit: z
-      .number({ invalid_type_error: 'El límite debe ser número' })
-      .int()
-      .min(1, { message: 'El límite mínimo es 1' })
-      .default(100),
+    limit: z.string().default('100'),
 
     fechaInicioIngreso: z.string().optional().default(''),
     fechaFinIngreso: z.string().optional().default(''),

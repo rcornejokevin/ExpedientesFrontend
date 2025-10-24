@@ -165,7 +165,7 @@ const Filtro = ({
                       <FormLabel>Límite</FormLabel>
                       <FormControl>
                         <InputGroup>
-                          <Input {...field} />
+                          <Input placeholder="SIN LIMITE" {...field} />
                         </InputGroup>
                       </FormControl>
                       <FormMessage />
