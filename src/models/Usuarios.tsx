@@ -77,4 +77,39 @@ const Delete = async (jwt: string, id: number) => {
     throw error;
   }
 };
-export { GetList, New, Delete, Edit };
+const ChangePassword = async (
+  jwt: string,
+  payload: { password: string; confirmPassword?: string },
+) => {
+  const newObj = {
+    newPassword: payload.password,
+  };
+  try {
+    const response: any = await sendPut(
+      newObj,
+      'usuario/changePassword',
+      true,
+      jwt,
+    );
+    if (response.code === '400' && response.data != null) {
+      const data = response.data;
+      let errorsString = '';
+      if (Array.isArray(data)) {
+        errorsString = data.join(' | ');
+      } else if (typeof data === 'object') {
+        errorsString = Object.values(data)
+          .map((messages: any) =>
+            Array.isArray(messages) ? messages.join(', ') : String(messages),
+          )
+          .join(' | ');
+      } else {
+        errorsString = String(data);
+      }
+      response.message += `: ${errorsString}`;
+    }
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+export { GetList, New, Delete, Edit, ChangePassword };

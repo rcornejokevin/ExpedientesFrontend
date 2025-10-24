@@ -26,7 +26,7 @@ export interface CampoConValor {
   label: string;
 }
 export interface ExpedienteListFilters {
-  limit?: number;
+  limit?: number | '';
   fechaInicioIngreso?: string;
   fechaFinIngreso?: string;
   fechaInicioActualizacion?: string;
@@ -46,7 +46,7 @@ const GetList = async (
   reporteId?: number,
 ) => {
   const params: Record<string, any> = {
-    limit: filters?.limit ?? 100,
+    limit: filters?.limit,
     fechaInicioIngreso: filters?.fechaInicioIngreso ?? '',
     fechaFinIngreso: filters?.fechaFinIngreso ?? '',
     fechaInicioActualizacion: filters?.fechaInicioActualizacion ?? '',
@@ -63,8 +63,8 @@ const GetList = async (
   const response = await sendGet(params, 'cases/list', jwt);
   return response;
 };
-const GetListDetails = async (jwt: string, id: number) => {
-  const response = await sendGet('', `cases/detail/${id}`, jwt);
+const GetListDetails = async (jwt: string, id: number, header: number = 1) => {
+  const response = await sendGet('', `cases/detail/${id}/${header}`, jwt);
   return response;
 };
 const GetListNotes = async (jwt: string, id: number) => {

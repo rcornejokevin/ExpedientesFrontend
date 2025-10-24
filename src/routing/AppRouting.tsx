@@ -1,4 +1,5 @@
 import { useAuth } from '@/auth/AuthContext';
+import Autorizar from '@/auth/Autorizar';
 import CamposGeneral from '@/main/Campos_General/Campos';
 import Campos from '@/main/Campos/Campos';
 import Dashboard from '@/main/Dashboard';
@@ -38,6 +39,7 @@ export function AppRouting() {
         </Route>
       </Route>
       <Route path="auth/*" element={<RoutingSecurity />} />
+      <Route path="terminal/autorizar" element={<Autorizar />} />
     </Routes>
   );
 }

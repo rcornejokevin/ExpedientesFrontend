@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { GetItemExpediente, GetListDetails } from '@/models/Expediente';
-import ExpedienteResumenPDF from '@/pdf/ExpedienteResumenPDF';
+import ReporteListadoPDF, {
+  ReporteListadoDetalleData,
+} from '@/pdf/ReporteListadoPDF';
 import { pdf } from '@react-pdf/renderer';
 import { Download } from 'lucide-react';
 import { useLoading } from '@/providers/loading-provider';
@@ -88,32 +90,104 @@ export default function Detalle({ open, setOpen, idExpediente }: iDetalle) {
                         const detailsRes: any = await GetListDetails(
                           user?.jwt ?? '',
                           Number.parseInt(String(idExpediente)),
+                          2,
                         );
-                        let detalles: any[] = [];
-                        if (detailsRes?.code === '000') {
-                          detalles = (detailsRes.data || []).map((f: any) => ({
+                        const normalizeMovements = (items?: any[]) =>
+                          (items ?? []).map((f: any) => ({
+                            id: f.id,
+                            fecha: f.fecha,
                             etapa: f.etapa,
-                            subEtapa: f.subEtapa,
-                            fechaEtapa: f.fecha,
-                            cargaImagen:
-                              f.nombreArchivo != '' && f.nombreArchivo != null
-                                ? true
-                                : false,
+                            subEtapa:
+                              f.subEtapa && f.subEtapa.trim().length > 0
+                                ? f.subEtapa
+                                : '',
                             estatus: f.estatus,
                             asesorNuevo: f.asesorNuevo,
+                            nombreArchivo: f.nombreArchivo,
                           }));
+
+                        const resolveAsesorFromDetails = (
+                          data: any,
+                          fallback?: string,
+                        ) => {
+                          if (data?.asesor) return data.asesor;
+                          const movements = normalizeMovements(
+                            data?.detalles ?? [],
+                          );
+                          for (let i = movements.length - 1; i >= 0; i--) {
+                            const mov = movements[i];
+                            if (mov?.asesorNuevo) return mov.asesorNuevo;
+                          }
+                          return fallback ?? undefined;
+                        };
+
+                        let detalleData: ReporteListadoDetalleData | undefined;
+                        if (
+                          detailsRes?.code === '000' &&
+                          detailsRes?.data?.expediente
+                        ) {
+                          const principal = detailsRes.data.expediente;
+                          const principalMovements = normalizeMovements(
+                            principal.detalles,
+                          );
+                          const principalAsesor = resolveAsesorFromDetails(
+                            principal,
+                            expediente?.asesor ?? undefined,
+                          );
+                          detalleData = {
+                            expediente: {
+                              ...principal,
+                              asesor: principalAsesor,
+                              subEtapa: principal.subEtapa,
+                              detalles: principalMovements,
+                            },
+                            relacionados: (
+                              detailsRes.data.relacionados ?? []
+                            ).map((rel: any) => {
+                              const relMovements = normalizeMovements(
+                                rel.detalles ?? [],
+                              );
+                              return {
+                                expediente: {
+                                  ...rel.expediente,
+                                  asesor: resolveAsesorFromDetails(
+                                    rel.expediente,
+                                    undefined,
+                                  ),
+                                  detalles: relMovements,
+                                },
+                                detalles: relMovements,
+                              };
+                            }),
+                          };
+                        } else if (detailsRes?.code === '000') {
+                          const fallbackMovements = normalizeMovements(
+                            detailsRes.data,
+                          );
+                          detalleData = {
+                            expediente: {
+                              id: Number.parseInt(
+                                String(expediente?.id ?? '0'),
+                                10,
+                              ),
+                              codigo: expediente?.codigo ?? '',
+                              nombre: expediente?.nombre ?? '',
+                              asunto: expediente?.asunto ?? '',
+                              estatus: expediente?.estatus ?? '',
+                              fechaIngreso: expediente?.fechaIngreso ?? '',
+                              fechaActualizacion:
+                                expediente?.fechaActualizacion ?? '',
+                              etapa: expediente?.etapa ?? '',
+                              subEtapa: expediente?.subEtapa ?? '',
+                              asesor: expediente?.asesor ?? '',
+                              detalles: fallbackMovements,
+                            },
+                          };
                         }
                         const doc = (
-                          <ExpedienteResumenPDF
-                            expediente={{
-                              codigo: expediente.codigo,
-                              nombre: expediente.nombre,
-                              fechaIngreso: expediente.fechaIngreso,
-                              flujo: expediente.flujo,
-                              estatus: expediente.estatus,
-                              asesor: expediente.asesor,
-                            }}
-                            detalles={detalles}
+                          <ReporteListadoPDF
+                            titulo="Detalle de expediente"
+                            detalleData={detalleData}
                             logoSrc={'/logos/marn_azul.png'}
                           />
                         );

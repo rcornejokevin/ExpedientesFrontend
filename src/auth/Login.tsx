@@ -26,6 +26,28 @@ import { Input, InputAddon, InputGroup } from '@/components/ui/input';
 import { useAuth } from './AuthContext';
 import { getSigninSchema, SigninSchemaType } from './SigninSchemaType';
 
+function getBrowserFingerprint() {
+  const data = [
+    navigator.userAgent || '',
+    navigator.language || '',
+    screen.colorDepth || '',
+    `${screen.width}x${screen.height}`,
+    new Date().getTimezoneOffset(),
+    navigator.platform || '',
+    navigator.hardwareConcurrency || '',
+    window.devicePixelRatio || '',
+    Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+  ];
+
+  const raw = data.join('###');
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const chr = raw.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(16);
+}
 const Login = () => {
   const { login } = useAuth();
   const { setAlert } = useFlash();
@@ -46,6 +68,7 @@ const Login = () => {
       const body = {
         username: values.usuario,
         password: values.password,
+        device: getBrowserFingerprint(),
       };
       const bodyResponse: any = await sendPost(
         body,

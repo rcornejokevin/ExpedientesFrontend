@@ -165,18 +165,7 @@ const Filtro = ({
                       <FormLabel>Límite</FormLabel>
                       <FormControl>
                         <InputGroup>
-                          <Input
-                            type="number"
-                            min={1}
-                            value={field.value ?? 100}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value === ''
-                                  ? undefined
-                                  : Number(e.target.value),
-                              )
-                            }
-                          />
+                          <Input {...field} />
                         </InputGroup>
                       </FormControl>
                       <FormMessage />

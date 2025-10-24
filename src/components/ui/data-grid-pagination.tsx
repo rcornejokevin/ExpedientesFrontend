@@ -40,7 +40,7 @@ function DataGridPagination(props: DataGridPaginationProps) {
 
   const mergedProps: DataGridPaginationProps = { ...defaultProps, ...props };
 
-  const btnBaseClasses = 'size-7 p-0 text-sm';
+  const btnBaseClasses = 'size-7 p-0 text-sm text-white font-bold';
   const btnArrowClasses = btnBaseClasses + ' rtl:transform rtl:rotate-180';
   const pageIndex = table.getState().pagination.pageIndex;
   const pageSize = table.getState().pagination.pageSize;
@@ -77,7 +77,7 @@ function DataGridPagination(props: DataGridPaginationProps) {
           size="sm"
           mode="icon"
           variant="ghost"
-          className={cn(btnBaseClasses, 'text-muted-foreground', {
+          className={cn(btnBaseClasses, 'text-white', {
             'bg-accent text-accent-foreground': pageIndex === i,
           })}
           onClick={() => {
@@ -139,7 +139,9 @@ function DataGridPagination(props: DataGridPaginationProps) {
           mergedProps?.sizesSkeleton
         ) : (
           <>
-            <div className="text-sm text-muted-foreground">{mergedProps?.sizesLabel}</div>
+            <div className="text-sm font-bold text-white">
+              {mergedProps?.sizesLabel}
+            </div>
             <Select
               value={`${pageSize}`}
               indicatorPosition="right"
@@ -153,7 +155,11 @@ function DataGridPagination(props: DataGridPaginationProps) {
               </SelectTrigger>
               <SelectContent side="top" className="min-w-[50px]">
                 {mergedProps?.sizes?.map((size: number) => (
-                  <SelectItem key={size} value={`${size}`}>
+                  <SelectItem
+                    key={size}
+                    value={`${size}`}
+                    className="text-white font-bold"
+                  >
                     {size}
                   </SelectItem>
                 ))}
@@ -167,7 +173,7 @@ function DataGridPagination(props: DataGridPaginationProps) {
           mergedProps?.infoSkeleton
         ) : (
           <>
-            <div className="text-sm text-muted-foreground text-nowrap order-2 sm:order-1">
+            <div className="text-sm font-bold text-white text-nowrap order-2 sm:order-1">
               {paginationInfo}
             </div>
             {pageCount > 1 && (

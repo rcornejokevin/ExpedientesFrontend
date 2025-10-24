@@ -100,30 +100,36 @@ const EditExpedienteForm = ({
         setAlert('error', e);
       }
     }
+    const camposPorClave = new Map<string, any>();
+    for (const field of jsonDatos) {
+      if (field?.nombre) {
+        camposPorClave.set(field.nombre, field);
+      }
+      if (field?.label && !camposPorClave.has(field.label)) {
+        camposPorClave.set(field.label, field);
+      }
+    }
     for (const f of schemaCfg?.fields ?? []) {
       def[f.nombre] = f.tipo === 'Cheque' ? false : '';
-      for (const field of jsonDatos) {
-        if (field.label === f.label && f.editable) {
-          switch (f.tipo) {
-            case 'Fecha': {
-              const rawValue = field.valor as string | undefined;
-              if (rawValue) {
-                const parsedDate = new Date(rawValue);
-                def[f.nombre] = Number.isNaN(parsedDate.getTime())
-                  ? ''
-                  : rawValue;
-              } else {
-                def[f.nombre] = '';
-              }
-              break;
-            }
-            case 'Cheque':
-              def[f.nombre] = field.valor == 'Si' ? true : false;
-              break;
-            default:
-              def[f.nombre] = field.valor;
+      const storedField =
+        camposPorClave.get(f.nombre) ?? camposPorClave.get(f.label);
+      if (!storedField || !f.editable) continue;
+      switch (f.tipo) {
+        case 'Fecha': {
+          const rawValue = storedField.valor as string | undefined;
+          if (rawValue) {
+            const parsedDate = new Date(rawValue);
+            def[f.nombre] = Number.isNaN(parsedDate.getTime()) ? '' : rawValue;
+          } else {
+            def[f.nombre] = '';
           }
+          break;
         }
+        case 'Cheque':
+          def[f.nombre] = storedField.valor == 'Si';
+          break;
+        default:
+          def[f.nombre] = storedField.valor;
       }
     }
     def['asesor'] =
@@ -204,13 +210,26 @@ const EditExpedienteForm = ({
       }
     }
     const camposAdicionales = jsonDatos.map((item: any) => {
+      const schemaField = schemaCfg?.fields.find(
+        (field) => field.nombre === item.nombre || field.label === item.label,
+      );
+      const clavePreferida =
+        schemaField?.nombre ??
+        (item.nombre !== undefined ? String(item.nombre) : undefined);
+      const claveAlterna =
+        item.label !== undefined ? String(item.label) : undefined;
+      const valorActual =
+        clavePreferida && values[clavePreferida] !== undefined
+          ? values[clavePreferida]
+          : claveAlterna && values[claveAlterna] !== undefined
+            ? values[claveAlterna]
+            : undefined;
       const getValor = function () {
-        if (values[item.nombre] != undefined) {
-          return item.tipoCampo == 'Cheque'
-            ? values[item.nombre] == true
-              ? 'Si'
-              : 'No'
-            : values[item.nombre];
+        if (valorActual !== undefined) {
+          if (item.tipoCampo == 'Cheque') {
+            return valorActual === true || valorActual === 'Si' ? 'Si' : 'No';
+          }
+          return valorActual;
         }
         return item.valor;
       };
@@ -218,7 +237,10 @@ const EditExpedienteForm = ({
         label: item.label,
         tipoCampo: item.tipoCampo,
         valor: getValor(),
-        nombre: item.nombre,
+        nombre: (item.nombre ??
+          schemaField?.nombre ??
+          claveAlterna ??
+          '') as string,
       };
     });
     const obj = {
@@ -316,28 +338,32 @@ const EditExpedienteForm = ({
     }
   };
   useEffect(() => {
-    const fetchDataRemitente = async () => {
-      const response = await GetListRemitente(user?.jwt ?? '');
-      if (response.code === '000') {
-        const data = response.data;
-        const mapped: any = data
-          .map((f: any) => ({
-            value: String(f.id),
-            nombre: f.descripcion,
-          }))
-          .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
-        setRemitente(mapped);
-      } else {
-        setAlert({ type: 'error', message: response.message });
-      }
-    };
-    const fetchData = async () => {
-      const response = await GetListCampo(user?.jwt ?? '');
-      if (response.code === '000') {
-        const data = response.data;
-        let cfg: ApiSchemaConfig = { fields: [] };
-        cfg.fields = [
-          ...(await data
+    let isMounted = true;
+    const loadData = async () => {
+      if (!expediente) return;
+      setLoading(true);
+      setLoadingComplete(true);
+      try {
+        const [remResponse, camposResponse] = await Promise.all([
+          GetListRemitente(user?.jwt ?? ''),
+          GetListCampo(user?.jwt ?? ''),
+        ]);
+        if (!isMounted) return;
+        if (remResponse.code === '000') {
+          const data = remResponse.data;
+          const mapped: ItemSelect[] = data
+            .map((f: any) => ({
+              value: String(f.id),
+              nombre: f.descripcion,
+            }))
+            .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
+          setRemitente(mapped);
+        } else {
+          setAlert({ type: 'error', message: remResponse.message });
+        }
+        if (camposResponse.code === '000') {
+          const data = camposResponse.data;
+          const fields = data
             .sort((a: any, b: any) => (a.orden ?? 0) - (b.orden ?? 0))
             .filter(
               (item: any) =>
@@ -354,28 +380,28 @@ const EditExpedienteForm = ({
               placeholder: f.placeholder,
               id: f.id,
               editable: f.editable,
-            }))),
-        ];
-        setSchemaCfg(cfg);
-      } else {
-        setAlert({ type: 'error', message: response.message });
+            }));
+          setSchemaCfg({ fields });
+        } else {
+          setAlert({ type: 'error', message: camposResponse.message });
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        setAlert({
+          type: 'error',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        if (!isMounted) return;
+        setLoadingComplete(false);
+        setLoading(false);
       }
     };
-    setLoading(true);
-    setLoadingComplete(true);
-    form.reset({
-      etapa: expediente.etapaId != null ? String(expediente.etapaId) : '',
-      subEtapa:
-        expediente.etapaDetalleId != null
-          ? String(expediente.etapaDetalleId)
-          : '',
-      asesor: expediente.asesorId != null ? String(expediente.asesorId) : '',
-    });
-    setLoadingComplete(false);
-    setLoading(false);
-    fetchData();
-    fetchDataRemitente();
-  }, [expediente]);
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [expediente, user?.jwt, setAlert]);
 
   return (
     <Form {...form}>
@@ -901,14 +927,28 @@ const EditExpedienteForm = ({
                 ))}
                 {extraFields
                   ?.filter((item) => {
-                    const jsonDatos = JSON.parse(expediente.campoValorJson);
-                    const itemCampo = schemaCfg?.fields
-                      .filter((i) => i.label == item.label)
-                      .at(0);
-                    const editable = itemCampo?.editable;
-                    const jsonDatosFiltered = jsonDatos.filter(
-                      (d: any) => d.label == item.label && editable,
+                    const jsonDatos = JSON.parse(
+                      expediente.campoValorJson ?? '[]',
                     );
+                    const itemCampo = schemaCfg?.fields.find(
+                      (i) => i.nombre === item.nombre || i.label === item.label,
+                    );
+                    const editable = itemCampo?.editable;
+                    const clave =
+                      item.nombre !== undefined
+                        ? String(item.nombre)
+                        : item.label !== undefined
+                          ? String(item.label)
+                          : undefined;
+                    const jsonDatosFiltered = jsonDatos.filter((d: any) => {
+                      const dClave =
+                        d?.nombre !== undefined
+                          ? String(d.nombre)
+                          : d?.label !== undefined
+                            ? String(d.label)
+                            : undefined;
+                      return dClave === clave && editable;
+                    });
 
                     return jsonDatosFiltered.length > 0 && itemCampo?.editable
                       ? false
@@ -984,74 +1024,80 @@ const EditExpedienteForm = ({
                 <></>
               )}
               {expediente.estatus == 'Cerrado' &&
-                expediente.puedeArchivarse &&
-                user?.perfil != 'ASESOR' && (
-                  <Button
-                    className="rounded-3xl"
-                    type="button"
-                    style={{ backgroundColor: '#D9EC6C' }}
-                    onClick={() => {
-                      estatusExpediente('Archivado');
-                    }}
-                  >
-                    <Text className="text-[#192854] font-bold text-md">
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                          Cargando...
-                        </span>
-                      ) : (
-                        'ARCHIVAR EXPEDIENTE'
-                      )}
-                    </Text>
-                  </Button>
-                )}
+              expediente.puedeArchivarse &&
+              user?.perfil != 'ASESOR' ? (
+                <Button
+                  className="rounded-3xl"
+                  type="button"
+                  style={{ backgroundColor: '#D9EC6C' }}
+                  onClick={() => {
+                    estatusExpediente('Archivado');
+                  }}
+                >
+                  <Text className="text-[#192854] font-bold text-md">
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                        Cargando...
+                      </span>
+                    ) : (
+                      'ARCHIVAR EXPEDIENTE'
+                    )}
+                  </Text>
+                </Button>
+              ) : (
+                <></>
+              )}
               {expediente.estatus == 'Cerrado' &&
-                expediente.puedeDevolverseAlRemitente &&
-                user?.perfil != 'ASESOR' && (
-                  <Button
-                    className="rounded-3xl"
-                    type="button"
-                    style={{ backgroundColor: '#D9EC6C' }}
-                    onClick={() => {
-                      estatusExpediente('Devuelto al Remitente');
-                    }}
-                  >
-                    <Text className="text-[#192854] font-bold text-md">
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                          Cargando...
-                        </span>
-                      ) : (
-                        'DEVOLVER AL REMITENTE'
-                      )}
-                    </Text>
-                  </Button>
-                )}
+              expediente.puedeDevolverseAlRemitente &&
+              user?.perfil != 'ASESOR' ? (
+                <Button
+                  className="rounded-3xl"
+                  type="button"
+                  style={{ backgroundColor: '#D9EC6C' }}
+                  onClick={() => {
+                    estatusExpediente('Devuelto al Remitente');
+                  }}
+                >
+                  <Text className="text-[#192854] font-bold text-md">
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                        Cargando...
+                      </span>
+                    ) : (
+                      'DEVOLVER AL REMITENTE'
+                    )}
+                  </Text>
+                </Button>
+              ) : (
+                <></>
+              )}
               {expediente.estatus == 'Cerrado' &&
-                expediente.puedeEnviarAJudicial &&
-                user?.perfil != 'ASESOR' && (
-                  <Button
-                    className="rounded-3xl"
-                    type="button"
-                    style={{ backgroundColor: '#D9EC6C' }}
-                    onClick={() => {
-                      estatusExpediente('Enviado al Organismo Judicial');
-                    }}
-                  >
-                    <Text className="text-[#192854] font-bold text-md">
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <LoaderCircleIcon className="h-4 w-4 animate-spin" />
-                          Cargando...
-                        </span>
-                      ) : (
-                        'ENVIAR AL ORGANISMO JUDICIAL'
-                      )}
-                    </Text>
-                  </Button>
-                )}
+              expediente.puedeEnviarAJudicial &&
+              user?.perfil != 'ASESOR' ? (
+                <Button
+                  className="rounded-3xl"
+                  type="button"
+                  style={{ backgroundColor: '#D9EC6C' }}
+                  onClick={() => {
+                    estatusExpediente('Enviado al Organismo Judicial');
+                  }}
+                >
+                  <Text className="text-[#192854] font-bold text-md">
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                        Cargando...
+                      </span>
+                    ) : (
+                      'ENVIAR AL ORGANISMO JUDICIAL'
+                    )}
+                  </Text>
+                </Button>
+              ) : (
+                <></>
+              )}
             </div>
             <div className="flex justify-end">
               <Button
@@ -1062,9 +1108,14 @@ const EditExpedienteForm = ({
                   const doc = (
                     <CaratulaPDF
                       codigo={expediente.codigo}
+                      identificadorExpediente={expediente.codigo}
+                      numeroExpedienteUAI={expediente.codigo}
                       nombreExpediente={expediente.nombre}
                       fechaIngreso={expediente.fechaIngreso}
                       tipoProceso={expediente.flujo}
+                      asunto={expediente.asunto}
+                      remitente={expediente.remitente}
+                      asesorAsignado={expediente.asesor}
                       logoSrc={'/logos/marn_azul.png'}
                     />
                   );

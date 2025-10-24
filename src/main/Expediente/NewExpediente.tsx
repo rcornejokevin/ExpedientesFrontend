@@ -771,22 +771,35 @@ export default function NewExpediente({
                       style={{ backgroundColor: 'white' }}
                       onClick={async () => {
                         const vals = form.getValues();
+                        const remitenteNombre =
+                          remitente?.find(
+                            (item) => item.value === vals['REMITENTE'],
+                          )?.nombre ?? '';
+                        const asesorNombre =
+                          asesor?.find(
+                            (item) => item.value === vals['ASESOR ASIGNADO'],
+                          )?.nombre ?? '';
+                        const flujoNombre =
+                          flujo
+                            ?.filter(
+                              (item) =>
+                                item.value == vals['TIPO DE PROCESO'],
+                            )
+                            .map((item) => item.nombre)
+                            .at(0) || '';
                         const doc = (
                           <CaratulaPDF
                             codigo={vals['CODIGO'] || ''}
+                            identificadorExpediente={vals['CODIGO'] || ''}
+                            numeroExpedienteUAI={vals['CODIGO'] || ''}
                             nombreExpediente={
                               vals['NOMBRE DE EXPEDIENTE'] || ''
                             }
                             fechaIngreso={vals['FECHA DE INGRESO'] || ''}
-                            tipoProceso={
-                              flujo
-                                ?.filter(
-                                  (item) =>
-                                    item.value == vals['TIPO DE PROCESO'],
-                                )
-                                .map((item) => item.nombre)
-                                .at(0) || ''
-                            }
+                            tipoProceso={flujoNombre}
+                            asunto={vals['ASUNTO'] || ''}
+                            remitente={remitenteNombre}
+                            asesorAsignado={asesorNombre}
                             logoSrc={'/logos/marn_azul.png'}
                           />
                         );
