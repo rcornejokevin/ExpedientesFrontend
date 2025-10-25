@@ -12,11 +12,7 @@ const MegaMenuSubDefault = (items: MenuConfig) => {
   const { isActive } = useMenu(pathname);
 
   const buildItems = (items: MenuConfig): ReactNode => {
-    const { user } = useAuth();
     return items.map((item, index) => {
-      if (user?.perfil === 'IT' && item.path == '/remitentes') {
-        return <></>;
-      }
       if (item.children) {
         return (
           <div key={index}>
