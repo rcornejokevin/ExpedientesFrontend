@@ -30,7 +30,7 @@ export const getEditSchema = (cfg: ApiSchemaConfig) => {
   shape['etapa'] = z.string().min(1, { message: 'La etapa es requerida' });
   shape['asesor'] = z.string().min(1, { message: 'El asesor es requerido' });
   shape['subEtapa'] = z.string();
-  if (user?.perfil === 'ADMINISTRADOR') {
+  if (user?.perfil === 'ADMINISTRADOR' || user?.perfil === 'DIRECTOR') {
     shape['ASUNTO'] = z
       .string({ required_error: 'El asunto es requerido' })
       .min(1, 'El asunto es requerido');

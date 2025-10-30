@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     color: '#1E2851',
+    marginRight: 40,
   },
   emptyMessage: {
     marginTop: 8,
@@ -325,10 +326,14 @@ export default function ReporteListadoPDF({
                 {section.detalles.length > 0 ? (
                   <View style={styles.detailsTable}>
                     <View style={styles.tr}>
-                      <Text style={[styles.th, { width: detailColWidths.fecha }]}>
+                      <Text
+                        style={[styles.th, { width: detailColWidths.fecha }]}
+                      >
                         FECHA
                       </Text>
-                      <Text style={[styles.th, { width: detailColWidths.etapa }]}>
+                      <Text
+                        style={[styles.th, { width: detailColWidths.etapa }]}
+                      >
                         ETAPA
                       </Text>
                       <Text
@@ -360,7 +365,10 @@ export default function ReporteListadoPDF({
                           {detalle.etapa ?? ''}
                         </Text>
                         <Text
-                          style={[styles.td, { width: detailColWidths.subEtapa }]}
+                          style={[
+                            styles.td,
+                            { width: detailColWidths.subEtapa },
+                          ]}
                         >
                           {detalle.subEtapa &&
                           detalle.subEtapa.trim().length > 0
@@ -373,7 +381,10 @@ export default function ReporteListadoPDF({
                           {detalle.asesorNuevo ?? ''}
                         </Text>
                         <Text
-                          style={[styles.td, { width: detailColWidths.estatus }]}
+                          style={[
+                            styles.td,
+                            { width: detailColWidths.estatus },
+                          ]}
                         >
                           {detalle.estatus ?? ''}
                         </Text>
@@ -391,11 +402,21 @@ export default function ReporteListadoPDF({
         ) : (
           <View style={styles.table}>
             <View style={styles.tr}>
-              <Text style={[styles.th, { width: colWidths.numero }]}>NÚMERO</Text>
-              <Text style={[styles.th, { width: colWidths.titulo }]}>TÍTULO</Text>
-              <Text style={[styles.th, { width: colWidths.ingreso }]}>INGRESO</Text>
-              <Text style={[styles.th, { width: colWidths.proceso }]}>PROCESO</Text>
-              <Text style={[styles.th, { width: colWidths.estatus }]}>ESTATUS</Text>
+              <Text style={[styles.th, { width: colWidths.numero }]}>
+                NÚMERO
+              </Text>
+              <Text style={[styles.th, { width: colWidths.titulo }]}>
+                TÍTULO
+              </Text>
+              <Text style={[styles.th, { width: colWidths.ingreso }]}>
+                INGRESO
+              </Text>
+              <Text style={[styles.th, { width: colWidths.proceso }]}>
+                PROCESO
+              </Text>
+              <Text style={[styles.th, { width: colWidths.estatus }]}>
+                ESTATUS
+              </Text>
               <Text style={[styles.th, { width: colWidths.etapa }]}>ETAPA</Text>
               <Text style={[styles.th, { width: colWidths.modificacion }]}>
                 MODIFICACIÓN

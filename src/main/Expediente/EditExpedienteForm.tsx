@@ -254,19 +254,19 @@ const EditExpedienteForm = ({
       asunto:
         user?.perfil == 'ADMINISTRADOR' ? values.ASUNTO : expediente.asunto,
       nombre:
-        user?.perfil == 'ADMINISTRADOR'
+        user?.perfil == 'ADMINISTRADOR' || user?.perfil == 'DIRECTOR'
           ? values['NOMBRE DE EXPEDIENTE']
           : expediente.nombre,
       remitenteId:
-        user?.perfil == 'ADMINISTRADOR'
+        user?.perfil == 'ADMINISTRADOR' || user?.perfil == 'DIRECTOR'
           ? Number.parseInt(values['REMITENTE'])
           : Number.parseInt(expediente.remitenteId),
       fechaIngreso:
-        user?.perfil == 'ADMINISTRADOR'
+        user?.perfil == 'ADMINISTRADOR' || user?.perfil == 'DIRECTOR'
           ? values['FECHA DE INGRESO']
           : expediente.fechaIngreso,
       expedienteRelacionadoId:
-        user?.perfil == 'ADMINISTRADOR'
+        user?.perfil == 'ADMINISTRADOR' || user?.perfil == 'DIRECTOR'
           ? Number.parseInt(values['EXPEDIENTE RELACIONADO'])
           : Number.parseInt(expediente.expedienteRelacionadoId),
     };
@@ -431,7 +431,10 @@ const EditExpedienteForm = ({
                 <FormField
                   control={form.control}
                   name={'NOMBRE DE EXPEDIENTE'}
-                  disabled={user?.perfil !== 'ADMINISTRADOR'}
+                  disabled={
+                    user?.perfil !== 'ADMINISTRADOR' &&
+                    user?.perfil !== 'DIRECTOR'
+                  }
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="color-dark-blue-marn font-bold">
@@ -451,7 +454,10 @@ const EditExpedienteForm = ({
                 <FormField
                   control={form.control}
                   name={'ASUNTO'}
-                  disabled={user?.perfil !== 'ADMINISTRADOR'}
+                  disabled={
+                    user?.perfil !== 'ADMINISTRADOR' &&
+                    user?.perfil !== 'DIRECTOR'
+                  }
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="color-dark-blue-marn font-bold">
@@ -468,7 +474,8 @@ const EditExpedienteForm = ({
                     </FormItem>
                   )}
                 />
-                {user?.perfil != 'ADMINISTRADOR' ? (
+                {user?.perfil != 'ADMINISTRADOR' &&
+                user?.perfil !== 'DIRECTOR' ? (
                   <FormItem>
                     <FormLabel className="color-dark-blue-marn font-bold">
                       REMITENTE
@@ -520,7 +527,8 @@ const EditExpedienteForm = ({
                     )}
                   />
                 )}
-                {user?.perfil == 'ADMINISTRADOR' ? (
+                {user?.perfil == 'ADMINISTRADOR' ||
+                user?.perfil == 'DIRECTOR' ? (
                   <DatePickerMarn
                     form={form}
                     name={'FECHA DE INGRESO'}
@@ -579,7 +587,8 @@ const EditExpedienteForm = ({
                 </FormItem>
                 {expediente.puedeRelacionarse != '' && (
                   <>
-                    {user?.perfil == 'ADMINISTRADOR' ? (
+                    {user?.perfil == 'ADMINISTRADOR' ||
+                    user?.perfil == 'DIRECTOR' ? (
                       <Field
                         expedientes={expedientes}
                         expediente={expediente}

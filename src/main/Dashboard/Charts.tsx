@@ -87,7 +87,7 @@ const Charts = () => {
       {series.length > 0 && (
         <>
           <div className="text-[12px] font-extrabold uppercase tracking-wide text-[#1E2851] mb-2">
-            EXPEDIENTES ASIGNADOS / ATENDIDOS
+            EXPEDIENTES ASIGNADOS / FINALIZADOS
           </div>
           <LineChart
             width={250}
@@ -95,7 +95,7 @@ const Charts = () => {
             data={series.map((item: any) => ({
               name: item.value,
               Asignados: item.assigned,
-              Atendidos: item.attended,
+              Finalizados: item.attended,
             }))}
             margin={{ top: 5, bottom: 5 }}
           >
@@ -105,7 +105,7 @@ const Charts = () => {
             <Tooltip />
             <Legend />
             <Line type="monotone" dataKey="Asignados" stroke="#8884d8" />
-            <Line type="monotone" dataKey="Atendidos" stroke="#82ca9d" />
+            <Line type="monotone" dataKey="Finalizados" stroke="#82ca9d" />
           </LineChart>
         </>
       )}
@@ -175,7 +175,7 @@ const Charts = () => {
       {attended.length > 0 && (
         <>
           <div className="text-[12px] font-extrabold uppercase tracking-wide text-[#1E2851] mb-2">
-            TIPOS DE EXPEDIENTES ATENDIDOS
+            TIPOS DE EXPEDIENTES FINALIZADOS
           </div>
           <div className="flex gap-3 items-start">
             <PieChart width={160} height={160}>
